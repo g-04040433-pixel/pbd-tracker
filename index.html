@@ -1,6 +1,2119 @@
 <!doctype html>
 <html lang="en"><head><script src="/_sdk/telemetry_sdk.js"></script>
+ <!doctype html>
+<html lang="en"><head><script src="/_sdk/telemetry_sdk.js"></script>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TP Tracker System</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .tab-active { background: #4c1d95 !important; color: #fff !important; }
+    .page-hidden { display: none; }
+    .badge { background: #f3e8ff; color: #6b21a8; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+    .teacher-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .teacher-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    .reflection-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .reflection-modal.hidden { display: none; }
+    .reflection-content { background: white; border-radius: 12px; padding: 24px; max-width: 500px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+    .reflection-title { font-size: 18px; font-weight: 700; color: #1e1b4b; margin-bottom: 12px; }
+    .reflection-descriptor { background: #f3f4f6; border-left: 4px solid #4c1d95; padding: 12px; border-radius: 6px; margin: 12px 0; font-size: 14px; color: #374151; line-height: 1.6; }
+    .reflection-actions { display: flex; gap: 12px; margin-top: 16px; }
+    .reflection-actions button { flex: 1; padding: 10px; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+    .reflect-btn { background: #4c1d95; color: white; }
+    .reflect-btn:hover { background: #5d2fa6; }
+    .keep-btn { background: #e5e7eb; color: #1f2937; }
+    .keep-btn:hover { background: #d1d5db; }
+    .verify-icon { display: inline-block; width: 20px; height: 20px; background: #4c1d95; color: white; border-radius: 50%; text-align: center; line-height: 20px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 6px; }
+    .verify-icon:hover { background: #5d2fa6; }
+  </style>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen p-4 md:p-8" style="background: rgb(243, 244, 246);">
+  <!-- DIRECTORY -->
+  <div id="directory-page" class="max-w-6xl mx-auto py-8 text-center">
+   <h1 class="text-3xl font-bold mb-2 text-slate-900">English Language TP Tracker</h1>
+   <p class="text-gray-600 mb-6">Select your name to access your custom tracking workspace.</p><!-- Safe Native Search Widget -->
+   <div style="margin: 20px auto; max-width: 500px; padding: 0 15px; text-align: center;">
+    <input type="text" id="dashboard-student-search" placeholder="🔍 Type student name to find..." style="width: 100%; padding: 10px 15px; border: 2px solid #4c1d95; border-radius: 25px; font-size: 14px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <p id="search-help-text" style="font-size: 11px; color: #666; margin-top: 5px;">Tip: Type any teacher's name to find their class button and navigate to their workspace.</p>
+   </div>
+   <div id="teacher-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8"></div>
+  </div><!-- WORKSPACE -->
+  <div id="workspace-page" class="page-hidden max-w-6xl mx-auto">
+   <button onclick="backToDirectory()" class="mb-4 text-sm font-semibold text-blue-600 hover:text-blue-800">← Back to Directory</button>
+   <h1 id="ws-title" class="text-2xl font-bold mb-1 text-slate-800"></h1>
+   <p id="ws-classes" class="text-sm mb-3 text-gray-500"></p>
+   <nav class="flex gap-2 mb-4 border-b border-gray-200 pb-2">
+    <button id="nav-p1" class="px-4 py-2 rounded font-semibold bg-gray-200 tab-active" onclick="showTab('p1')">Assessment Entry</button> <button id="nav-p2" class="px-4 py-2 rounded font-semibold bg-gray-200" onclick="showTab('p2')">TP Collection</button> <button id="nav-p3" class="px-4 py-2 rounded font-semibold bg-gray-200" onclick="showTab('p3')">Rekod Transit</button> <button id="nav-p4" class="px-4 py-2 rounded font-semibold bg-gray-200" onclick="showTab('p4')">Final Report</button> <button id="nav-p5" class="px-4 py-2 rounded font-semibold bg-gray-200" onclick="showTab('p5')">Analisis</button>
+   </nav><!-- TAB 1: Assessment Entry -->
+   <div id="tab-p1">
+    <div class="flex flex-wrap items-end gap-3 p-4 bg-white border rounded-lg mb-4 shadow-sm">
+     <div class="flex flex-col">
+      <label class="text-xs font-medium mb-1 text-gray-700">Date</label> <input type="date" id="date-input" class="border rounded px-3 py-1.5 text-sm">
+     </div>
+     <div class="flex flex-col">
+      <label class="text-xs font-medium mb-1 text-gray-700">Class</label> <select id="class-select" class="border rounded px-3 py-1.5 text-sm" onchange="onClassChange()"></select>
+     </div>
+     <div class="flex flex-col">
+      <label class="text-xs font-medium mb-1 text-gray-700">Unit</label> <select id="unit-select" class="border rounded px-3 py-1.5 text-sm"></select>
+     </div>
+     <div class="flex flex-col min-w-[200px]">
+      <label class="text-xs font-medium mb-1 text-gray-700">Learning Standard</label> <select id="ls-select" class="border rounded px-3 py-1.5 text-sm"></select>
+     </div>
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+     <button class="bg-blue-600 text-white px-5 py-2 rounded font-semibold hover:bg-blue-700" onclick="saveData()">Save Records</button> <span id="save-status" class="text-sm text-green-700 hidden">✓ Saved</span> <span id="save-error" class="text-sm text-red-600 hidden"></span>
+    </div>
+    <div class="overflow-x-auto rounded-lg border shadow-sm bg-white">
+     <table class="w-full text-sm">
+      <thead class="bg-gray-100 text-gray-700">
+       <tr>
+        <th class="px-3 py-2 text-left w-12">No</th>
+        <th class="px-3 py-2 text-left">Student Name</th>
+        <th class="px-3 py-2 text-left w-40">Select All TP <select id="select-all-tp" class="ml-2 border rounded px-2 py-1 text-xs font-normal" onchange="applySelectAll()"><option value="">--</option><option>TP1</option><option>TP2</option><option>TP3</option><option>TP4</option><option>TP5</option><option>TP6</option></select></th>
+        <th class="px-3 py-2 text-left w-32">Override TP</th>
+        <th class="px-3 py-2 text-left w-32">Final TP</th>
+       </tr>
+      </thead>
+      <tbody id="student-tbody"></tbody>
+     </table>
+    </div>
+   </div><!-- TAB 2: TP Collection -->
+   <div id="tab-p2" class="page-hidden">
+    <h2 class="text-xl font-bold mb-3 text-slate-800">TP Collection Overview</h2>
+    <div id="collection-class-tabs" class="flex gap-1 flex-wrap border-b border-gray-200 mb-4"></div>
+    <div id="collection-table" class="overflow-x-auto rounded-lg border shadow-sm bg-white"></div>
+   </div><!-- TAB 3: Rekod Transit -->
+   <div id="tab-p3" class="page-hidden">
+    <h2 class="text-xl font-bold mb-3 text-slate-800">Rekod Transit Dashboard</h2>
+    <div id="rekod-class-tabs" class="flex gap-1 flex-wrap border-b border-gray-200 mb-4"></div>
+    <div id="rekod-table" class="overflow-x-auto rounded-lg border shadow-sm bg-white"></div>
+   </div><!-- TAB 4: Final Report -->
+   <div id="tab-p4" class="page-hidden">
+    <h2 class="text-xl font-bold mb-3 text-slate-800">Student Assessment Final Report</h2>
+    <div class="flex justify-end mb-4">
+     <button onclick="exportFinalReportToXLS()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold flex items-center gap-2"> <i data-lucide="download"></i> Export to XLS </button>
+    </div>
+    <div id="report-class-tabs" class="flex gap-1 flex-wrap border-b border-gray-200 mb-6"></div>
+    <div id="final-report-container" class="space-y-6"></div>
+   </div><!-- TAB 5: Analisis -->
+   <div id="tab-p5" class="page-hidden">
+    <h2 class="text-xl font-bold mb-4 text-slate-800">Analisis Santai</h2>
+    <p class="text-sm text-gray-600 mb-6">Analisis ringkas berdasarkan taburan TP. Tiada purata TP digunakan.</p>
+    <div class="bg-white rounded-lg border shadow-sm p-6 mb-6">
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="flex flex-col">
+       <label class="text-xs font-medium mb-2 text-gray-700">Kelas</label> <select id="analisis-class-select" class="border rounded px-3 py-2 text-sm" onchange="updateAnalisisUI()"></select>
+      </div>
+      <div class="flex flex-col">
+       <label class="text-xs font-medium mb-2 text-gray-700">Kemahiran</label> <select id="analisis-skill-select" class="border rounded px-3 py-2 text-sm" onchange="updateAnalisisUI()"> <option value="">Semua kemahiran</option> <option value="1">Listening</option> <option value="2">Speaking</option> <option value="3">Reading</option> <option value="4">Writing</option> <option value="5">Literature</option> </select>
+      </div>
+      <div class="flex flex-col">
+       <label class="text-xs font-medium mb-2 text-gray-700">Standard Pembelajaran</label> <select id="analisis-ls-select" class="border rounded px-3 py-2 text-sm" onchange="updateAnalisisUI()"> <option value="">Semua SP</option> </select>
+      </div>
+     </div><button class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold" onclick="runAnalisis()">📊 Jana Analisis</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+     <div class="bg-white border rounded-lg p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-600 mb-1">
+       Jumlah Rekod
+      </div>
+      <div class="text-3xl font-bold text-slate-800" id="metric-total-records">
+       0
+      </div>
+     </div>
+     <div class="bg-white border rounded-lg p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-600 mb-1">
+       Murid Terlibat
+      </div>
+      <div class="text-3xl font-bold text-slate-800" id="metric-unique-students">
+       0
+      </div>
+     </div>
+     <div class="bg-white border rounded-lg p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-600 mb-1">
+       TP1-TP2
+      </div>
+      <div class="text-3xl font-bold text-red-600" id="metric-tp1-tp2">
+       0
+      </div>
+     </div>
+     <div class="bg-white border rounded-lg p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-600 mb-1">
+       TP3-TP4
+      </div>
+      <div class="text-3xl font-bold text-yellow-600" id="metric-tp3-tp4">
+       0
+      </div>
+     </div>
+     <div class="bg-white border rounded-lg p-4 shadow-sm">
+      <div class="text-xs font-medium text-gray-600 mb-1">
+       TP5-TP6
+      </div>
+      <div class="text-3xl font-bold text-green-600" id="metric-tp5-tp6">
+       0
+      </div>
+     </div>
+    </div>
+    <div class="bg-white rounded-lg border shadow-sm p-6">
+     <h3 class="text-lg font-bold mb-4 text-slate-800">Taburan TP</h3>
+     <div class="space-y-3" id="distribution-chart"></div>
+    </div>
+   </div>
+   <div id="reflection-modal" class="reflection-modal hidden">
+    <div class="reflection-content">
+     <div class="reflection-title" id="reflection-title"></div>
+     <div class="reflection-descriptor" id="reflection-descriptor"></div>
+     <div class="reflection-actions">
+      <button class="reflect-btn" onclick="handleReflectionAction('reflect')">Reflect &amp; Update TP</button> <button class="keep-btn" onclick="handleReflectionAction('keep')">Keep Current TP</button>
+     </div>
+    </div>
+   </div>
+   <script src="/_sdk/editing_sdk.js"></script>
+   <script>
+  // ===== CERTIFIED LEARNING STANDARDS DATABASE =====
+  const officialLearningStandards = {
+    "1": [
+      { code: "1.1.1", desc: "Understand with little or no support the main ideas in simple longer texts on a range of familiar topics." },
+      { code: "1.1.2", desc: "Understand with little or no support specific information and details in simple longer texts on a range of familiar topics." },
+      { code: "1.1.3", desc: "Understand with little or no support attitudes or opinions in simple longer texts on a range of familiar topics." },
+      { code: "1.1.4", desc: "Understand longer sequences of supported classroom instructions." },
+      { code: "1.1.5", desc: "Understand more complex supported questions." },
+      { code: "1.1.6", desc: "Understand with support longer simple narratives on a wide range of familiar topics." },
+      { code: "1.2.1", desc: "Guess the meaning of unfamiliar words from clues provided by other known words and by context on familiar topics." },
+      { code: "2.1.1", desc: "Ask about and give detailed information about themselves and others." },
+      { code: "2.1.2", desc: "Ask about and express rules and obligations." },
+      { code: "2.1.3", desc: "Ask about and describe future plans or events." },
+      { code: "2.1.4", desc: "Explain and give reasons for simple advice." },
+      { code: "2.1.5", desc: "Ask about and describe personality." },
+      { code: "2.3.1", desc: "Keep interaction going in short exchanges by checking understanding of what a speaker is saying." },
+      { code: "2.3.2", desc: "Agree on a set of basic steps needed to complete extended classroom tasks." },
+      { code: "2.4.1", desc: "Narrate short stories, events and experiences." },
+      { code: "3.1.1", desc: "Understand the main points in simple longer texts." },
+      { code: "3.1.2", desc: "Understand specific details and information in simple longer texts." },
+      { code: "3.1.3", desc: "Guess the meaning of unfamiliar words from clues provided by other known words and by context." },
+      { code: "3.1.4", desc: "Use with some support familiar print and digital resources to check meaning." },
+      { code: "3.2.1", desc: "Read and enjoy fiction/non-fiction and other suitable print and digital texts of interest." },
+      { code: "4.1.1", desc: "Give detailed information about themselves and others." },
+      { code: "4.1.2", desc: "Describe future plans or events." },
+      { code: "4.1.3", desc: "Narrate factual and imagined events and experiences." },
+      { code: "4.1.4", desc: "Describe personality." },
+      { code: "4.1.5", desc: "Connect sentences into two coherent paragraphs or more using basic coordinating conjunctions and reference pronouns." },
+      { code: "4.2.1", desc: "Use capitals, full stops, commas in lists, question marks, and speech marks appropriately at discourse level." },
+      { code: "4.2.2", desc: "Spell most high frequency words accurately in independent writing." },
+      { code: "4.2.3", desc: "Produce a plan or draft of two paragraphs or more and modify this appropriately in response to feedback." },
+      { code: "5.1.1", desc: "Describe in simple language a character's actions or feelings and explain the reasons for them." },
+      { code: "5.1.2", desc: "Identify and describe in simple language the key characters in a text." },
+      { code: "5.3.1", desc: "Respond imaginatively and intelligibly through creating simple stories and simple poems." }
+    ],
+    "2": [
+      { code: "1.1.1", desc: "Understand independently the main ideas in simple longer texts on a range of familiar topics." },
+      { code: "1.1.2", desc: "Understand independently specific information and details in simple longer texts on a range of familiar topics." },
+      { code: "1.1.3", desc: "Recognise with support attitudes or opinions in simple longer texts on a range of familiar topics." },
+      { code: "1.1.4", desc: "Understand with little or no support longer sequences of classroom instructions." },
+      { code: "1.1.5", desc: "Understand with little or no support more complex questions." },
+      { code: "1.1.6", desc: "Understand with little or no support longer simple narratives on a wide range of familiar topics." },
+      { code: "1.2.1", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on a range of familiar topics." },
+      { code: "2.1.1", desc: "Ask about and explain key information from simple texts." },
+      { code: "2.1.2", desc: "Ask for and respond appropriately to simple suggestions." },
+      { code: "2.1.4", desc: "Express opinions about simple spoken or written advice given to themselves or others." },
+      { code: "2.1.5", desc: "Express opinions or feelings about character and personality." },
+      { code: "2.3.1", desc: "Keep interaction going in longer exchanges by checking understanding of what a speaker is saying." },
+      { code: "2.4.1", desc: "Communicate opinions or feelings about a story, event or experience." },
+      { code: "3.1.1", desc: "Understand the main points in simple longer texts on a range of familiar topics." },
+      { code: "3.1.2", desc: "Understand specific details and information in simple longer texts on a range of familiar topics." },
+      { code: "3.1.3", desc: "Guess the meaning of unfamiliar words from clues provided by other known words and by context on a range of familiar topics." },
+      { code: "3.1.4", desc: "Use independently familiar print and digital resources to check meaning." },
+      { code: "3.1.5", desc: "Recognise with support the attitude or opinion of the writer in simple longer texts." },
+      { code: "3.2.1", desc: "Read and enjoy fiction/non-fiction and other suitable print and digital texts of interest." },
+      { code: "4.1.1", desc: "Explain simple content from what they have read." },
+      { code: "4.1.2", desc: "Make and respond to simple requests and suggestions." },
+      { code: "4.1.3", desc: "Summarise the main points of a simple story, text or plot." },
+      { code: "4.1.4", desc: "Express opinions and common feelings such as happiness, sadness, surprise and interest." },
+      { code: "4.1.5", desc: "Organise and sequence ideas within short texts on familiar topics." },
+      { code: "4.2.1", desc: "Punctuate written work with moderate accuracy." },
+      { code: "4.2.2", desc: "Spell written work with moderate accuracy." },
+      { code: "4.2.3", desc: "Produce a plan or draft of two paragraphs or more and modify this appropriately either in response to feedback or independently." },
+      { code: "5.1.1", desc: "Explain in simple language connections between characters, places, or events in texts and their own lives." },
+      { code: "5.1.2", desc: "Identify and describe in simple language the key characters and themes in a text." },
+      { code: "5.3.1", desc: "Respond imaginatively and intelligibly through creating poems, board games, puzzles and quizzes." }
+    ],
+    "3": [
+      { code: "1.1.1", desc: "Understand independently the main ideas in simple longer texts on an increased range of familiar topics." },
+      { code: "1.1.2", desc: "Understand independently specific information and details in longer texts on an increased range of familiar topics." },
+      { code: "1.1.3", desc: "Recognise with little or no support attitudes or opinions in longer texts on an increased range of familiar topics." },
+      { code: "1.1.4", desc: "Understand independently longer sequences of classroom instructions." },
+      { code: "1.1.5", desc: "Understand independently more complex questions." },
+      { code: "1.1.6", desc: "Understand independently longer simple narratives on a range of familiar topics." },
+      { code: "1.2.1", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on an increased range of familiar topics." },
+      { code: "1.3.1", desc: "Recognise with support typical features at word, sentence and text levels of a small number of spoken genres." },
+      { code: "2.1.1", desc: "Paraphrase short simple texts." },
+      { code: "2.1.2", desc: "Ask about and explain simple processes." },
+      { code: "2.1.3", desc: "Describe future plans and ambitions." },
+      { code: "2.1.4", desc: "Explain own point of view." },
+      { code: "2.1.5", desc: "Express and respond to common feelings such as happiness, sadness, surprise, and interest." },
+      { code: "2.2.1", desc: "Use formal and informal registers appropriately in some familiar contexts." },
+      { code: "2.3.1", desc: "Keep interaction going in longer exchanges by asking a speaker to slow down, speak up or to repeat what they have said." },
+      { code: "2.4.1", desc: "Explain the main points of an idea or argument." },
+      { code: "3.1.1", desc: "Understand the main points in longer texts on an increased range of familiar topics." },
+      { code: "3.1.2", desc: "Understand specific details and information in longer texts on an increased range of familiar topics." },
+      { code: "3.1.3", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on an increased range of familiar topics." },
+      { code: "3.1.4", desc: "Use independently familiar print and digital resources to check meaning and extend understanding." },
+      { code: "3.1.5", desc: "Recognise with support the attitude or opinion of the writer in simple longer texts on an increased range of familiar topics." },
+      { code: "3.1.6", desc: "Recognise with support typical features at word, sentence and text levels of a range of genres." },
+      { code: "3.2.1", desc: "Read, enjoy and give a personal response to fiction / non-fiction and other suitable print and digital texts of interest." },
+      { code: "4.1.1", desc: "Explain simple content from what they have read or heard." },
+      { code: "4.1.2", desc: "Explain simple processes." },
+      { code: "4.1.3", desc: "Summarise the main points and explain key details of a story, text or plot." },
+      { code: "4.1.5", desc: "Organise, sequence and develop ideas within short texts on familiar topics." },
+      { code: "4.2.1", desc: "Punctuate written work with moderate accuracy." },
+      { code: "4.2.2", desc: "Spell written work with moderate accuracy." },
+      { code: "4.2.3", desc: "Produce a plan or draft of two paragraphs or more and modify this appropriately independently." },
+      { code: "4.2.4", desc: "Begin to use formal and informal registers appropriate to the target audience in familiar situations." },
+      { code: "5.1.2", desc: "Explain briefly the development of plot, characters and themes in a text." },
+      { code: "5.2.1", desc: "Identify key stylistic features of a text and explain briefly why the author uses them." }
+    ],
+    "4": [
+      { code: "1.1.1", desc: "Understand independently the main ideas in extended texts on a wide range of familiar topics." },
+      { code: "1.1.2", desc: "Understand independently specific information and details in extended texts on a wide range of familiar topics." },
+      { code: "1.1.3", desc: "Recognise independently attitudes or opinions in extended texts on a range of familiar topics." },
+      { code: "1.1.5", desc: "Understand independently more complex questions on a wide range of familiar topics." },
+      { code: "1.1.6", desc: "Understand independently longer simple narratives on a wide range of familiar topics." },
+      { code: "1.2.1", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on a wide range of familiar topics." },
+      { code: "1.3.1", desc: "Recognise with support typical features at word, sentence and text levels of a range of spoken genres." },
+      { code: "2.1.1", desc: "Explain simple content on familiar topics from what they read and hear." },
+      { code: "2.1.2", desc: "Ask about and explain causes and consequences of actions, events or simple processes." },
+      { code: "2.1.3", desc: "Explain advantages and disadvantages of plans and ambitions." },
+      { code: "2.1.4", desc: "Explain and justify own point of view." },
+      { code: "2.1.5", desc: "Express and respond to feelings such as amusement, anger and regret." },
+      { code: "2.2.1", desc: "Use formal and informal registers appropriately in most familiar contexts." },
+      { code: "2.3.1", desc: "Confirm understanding in discourse-level exchanges by repeating back what a speaker has said." },
+      { code: "2.4.1", desc: "Summarise the main points of a story, text or plot." },
+      { code: "3.1.1", desc: "Understand the main points in extended texts on a wide range of familiar topics." },
+      { code: "3.1.2", desc: "Understand specific details and information in extended texts on a wide range of familiar topics." },
+      { code: "3.1.3", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on a wide range of familiar topics." },
+      { code: "3.1.4", desc: "Use independently familiar and some unfamiliar print and digital resources to check meaning and extend understanding." },
+      { code: "3.1.5", desc: "Recognise with little or no support the attitude or opinion of the writer in extended texts on a wide range of familiar topics." },
+      { code: "3.1.6", desc: "Recognise with support typical features at word, sentence and text levels of an increased range of genres." },
+      { code: "3.2.1", desc: "Read a variety of suitable print and digital texts to investigate and analyse national issues." },
+      { code: "4.1.1", desc: "Explain information from (i) diagrams (ii) charts (iii) tables (iv) graphs or other visuals." },
+      { code: "4.1.2", desc: "Explain causes and consequences of (i) actions (ii) events or (iii) simple processes." },
+      { code: "4.1.3", desc: "Explain the main points of an idea or argument." },
+      { code: "4.1.4", desc: "Express and respond to opinions and common feelings such as amusement, anger and regret." },
+      { code: "4.1.5", desc: "Organise, sequence and develop ideas within a text of several paragraphs on familiar topics." },
+      { code: "4.2.1", desc: "Punctuate written work on a range of text types with reasonable accuracy." },
+      { code: "4.2.2", desc: "Spell written work on a range of text types with reasonable accuracy." },
+      { code: "4.2.3", desc: "Produce an extended plan or draft and modify this appropriately in response to feedback or independently." },
+      { code: "4.2.4", desc: "Use formal and informal registers appropriate to the target audience in most familiar situations." },
+      { code: "5.1.1", desc: "Explain briefly the feelings and opinions a text provokes in them." },
+      { code: "5.1.2", desc: "Explain in detail the development of plot, characters and themes in a text." },
+      { code: "5.2.1", desc: "Evaluate and explain briefly stylistic features an author uses to show character, events or place." }
+    ],
+    "5": [
+      { code: "1.1.1", desc: "Understand independently the main ideas in extended texts on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "1.1.2", desc: "Understand independently specific information and details in extended texts on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "1.1.3", desc: "Recognise independently attitudes or opinions in extended texts on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "1.1.6", desc: "Understand independently longer more complex narratives on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "1.2.1", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "1.3.1", desc: "Recognise with little or no support typical features at word, sentence and text levels of a range of spoken genres." },
+      { code: "2.1.1", desc: "Explain information on familiar topics from diagrams, charts, tables, graphs or other visuals." },
+      { code: "2.1.2", desc: "Ask about and explain advantages and disadvantages of ideas, plans, and arrangements." },
+      { code: "2.1.3", desc: "Explain and justify plans and ambitions." },
+      { code: "2.1.4", desc: "Explain and justify the point of view of classmates or others." },
+      { code: "2.1.5", desc: "Explain and justify own feelings or those of others." },
+      { code: "2.2.1", desc: "Use formal and informal registers appropriately in most familiar and some unfamiliar contexts." },
+      { code: "2.3.1", desc: "Keep interaction going in discourse-level exchanges by paraphrasing and rephrasing appropriately." },
+      { code: "2.4.1", desc: "Explain the main points of an idea or argument." },
+      { code: "3.1.1", desc: "Understand the main points in extended texts on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "3.1.2", desc: "Understand specific details and information in extended texts on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "3.1.3", desc: "Guess the meaning of unfamiliar words from clues provided by other words and by context on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "3.1.4", desc: "Use independently a range of familiar print and digital resources and some unfamiliar resources to check meaning and extend understanding." },
+      { code: "3.1.5", desc: "Recognise independently the attitude or opinion of the writer in extended texts on a wide range of familiar topics and some unfamiliar topics." },
+      { code: "3.1.6", desc: "Recognise with little or no support typical features at word, sentence and text levels of a wide range of genres." },
+      { code: "3.2.1", desc: "Read a variety of suitable print and digital texts to investigate and analyse global issues." },
+      { code: "4.1.1", desc: "Explain and evaluate (i) visual (ii) read (iii) heard information." },
+      { code: "4.1.2", desc: "Explain advantages and disadvantages of (i) ideas (ii) plans or (iii) arrangements." },
+      { code: "4.1.3", desc: "Explain the main points for and against an idea or argument." },
+      { code: "4.1.4", desc: "Express and respond to real or imagined opinions and feelings." },
+      { code: "4.1.5", desc: "Organise, sequence and develop ideas within a text of several paragraphs on familiar topics and some unfamiliar topics." },
+      { code: "4.2.1", desc: "Punctuate written work on a range of text types with reasonable accuracy." },
+      { code: "4.2.2", desc: "Spell written work on a range of text types with reasonable accuracy." },
+      { code: "4.2.3", desc: "Produce a plan or draft and modify this appropriately independently." },
+      { code: "4.2.4", desc: "Use formal and informal registers appropriate to the target audience in most familiar and some unfamiliar situations." },
+      { code: "5.1.1", desc: "Explain in detail the feelings and opinions a text provokes in them." },
+      { code: "5.1.2", desc: "Compare and contrast the way in which different literary extracts treat the same theme." },
+      { code: "5.2.1", desc: "Evaluate and explain in detail stylistic features an author uses to show character, events or place." },
+      { code: "5.3.1", desc: "Respond imaginatively and intelligibly through live performance of stage plays." }
+    ]
+  };
+
+  // ===== DATA CONFIG =====
+  const teachersConfig = {
+    "TEACHER YASMEEN": ["1A","1B","1D","1F","2A","2D"],
+    "TEACHER HAKIM": ["1C","1G","2C","2F"],
+    "TEACHER RICHETA": ["1E","2B","2E","2G"],
+    "TEACHER AFINI": ["1M","1KAA","2M","3B","3F"],
+    "TEACHER HANANI": ["3M","3C","3E","4B","4D"],
+    "TEACHER CHRISTINA": ["3A","3D"],
+    "TEACHER SYARINA": ["3G","4A","4F","5E","5G"],
+    "TEACHER YEONG": ["4C","4G","5A","5F"],
+    "TEACHER ROZIMAH": ["4E","5B","5C"],
+    "TEACHER ADNIN": ["4H","5D"]
+  };
+
+  // TP Descriptors by Skill (LS prefix) and Form
+  const tpDescriptors = {
+    "1": { // Listening
+      "1": {
+        desc: "Hardly understands main ideas and details; needs significant support for instructions/questions"
+      },
+      "2": {
+        desc: "Limited understanding in identifying main ideas and specific details with support"
+      },
+      "3": {
+        desc: "Adequate understanding of main ideas, details, instructions, and complex questions"
+      },
+      "4": {
+        desc: "Good understanding of main ideas, details, instructions, and complex questions"
+      },
+      "5": {
+        desc: "Very good understanding of main ideas, details, instructions, and complex questions"
+      },
+      "6": {
+        desc: "Independent and excellent understanding; serves as an exemplary language model"
+      }
+    },
+    "2": { // Speaking
+      "1": {
+        desc: "Hardly communicates information clearly or manages interaction even with support"
+      },
+      "2": {
+        desc: "Limited ability to communicate info clearly and manage interaction"
+      },
+      "3": {
+        desc: "Adequate ability to communicate information clearly and manage interaction"
+      },
+      "4": {
+        desc: "Good response in communicating information and managing interaction"
+      },
+      "5": {
+        desc: "Very good response in communicating information and managing interaction"
+      },
+      "6": {
+        desc: "Excellent response in communicating information and opinions; exemplary model"
+      }
+    },
+    "3": { // Reading
+      "1": {
+        desc: "Hardly understands main ideas/details; minimal dictionary skills even with guidance"
+      },
+      "2": {
+        desc: "Limited understanding of main ideas/details with a lot of guidance"
+      },
+      "3": {
+        desc: "Adequate understanding of main ideas and satisfactory use of dictionary skills"
+      },
+      "4": {
+        desc: "Good understanding of main ideas and positive attitude toward dictionary use"
+      },
+      "5": {
+        desc: "Very good understanding; skilful and precise use of dictionary skills"
+      },
+      "6": {
+        desc: "Independent/excellent reading and dictionary skills; gives opinions independently"
+      }
+    },
+    "4": { // Writing
+      "1": {
+        desc: "Hardly expresses ideas or organizes info; minimal punctuation/spelling accuracy"
+      },
+      "2": {
+        desc: "Limited ability to express ideas and organize information coherently"
+      },
+      "3": {
+        desc: "Adequate ability to express ideas and plan/edit work in response to feedback"
+      },
+      "4": {
+        desc: "Commendable expression of ideas and ability to plan/edit work correctly"
+      },
+      "5": {
+        desc: "High level of ability to express ideas and organize information effortlessly"
+      },
+      "6": {
+        desc: "Expresses ideas/feelings independently; excellent accuracy; independent editing"
+      }
+    },
+    "5": { // Literature
+      "1": {
+        desc: "Minimal understanding of texts or literary devices; needs extensive support"
+      },
+      "2": {
+        desc: "Limited understanding of texts and basic literary concepts with guidance"
+      },
+      "3": {
+        desc: "Adequate understanding of texts and identification of literary devices"
+      },
+      "4": {
+        desc: "Good understanding of texts and appropriate use of literary terminology"
+      },
+      "5": {
+        desc: "Very good understanding and analysis of texts with insightful interpretations"
+      },
+      "6": {
+        desc: "Excellent and independent analysis; demonstrates sophisticated literary understanding"
+      }
+    }
+  };
+
+  const skillNames = {
+    "1": "Listening",
+    "2": "Speaking",
+    "3": "Reading",
+    "4": "Writing",
+    "5": "Literature"
+  };
+
+  // ===== MASTER STUDENT DATABASE =====
+  const masterStudentDatabase = [
+    // --- FORM 1 CLASS 1A ---
+    { id: "S1001", name: "AHMAD ZAFRI BIN AHMAD NOORHAIZEM", classId: "1A" },
+    { id: "S1002", name: "AMMAR ISKANDAR BIN MAHATHIR", classId: "1A" },
+    { id: "S1003", name: "AREESA DERLISA BINTI SAWAL", classId: "1A" },
+    { id: "S1004", name: "ASHFIEZARRA BINTI AZMI", classId: "1A" },
+    { id: "S1005", name: "DANIEL RAFIQ KONG BIN ABDUL RASYID KONG", classId: "1A" },
+    { id: "S1006", name: "FAIZAH RAHILLA BINTI FAUZAN", classId: "1A" },
+    { id: "S1007", name: "HAIMI ARIL BIN HAMDAN", classId: "1A" },
+    { id: "S1008", name: "INTAN NURBATRISYIA RAWIYANI BINTI MAHANI", classId: "1A" },
+    { id: "S1009", name: "MUHAMMAD AMIR FIRDAUS BIN ABDULLAH", classId: "1A" },
+    { id: "S1010", name: "MUHAMMAD AZEEQ BIN ABDUL LATHEEF", classId: "1A" },
+    { id: "S1011", name: "MUHAMMAD AZRIL IKHWAN BIN ZAINAL ABIDIN", classId: "1A" },
+    { id: "S1012", name: "MUHAMMAD DANIEL BIN HERMAN", classId: "1A" },
+    { id: "S1013", name: "MUHAMMAD DANISH ASHRAAF BIN SYAH RIZAL", classId: "1A" },
+    { id: "S1014", name: "MUHAMMAD DANISH MUHKLIS BIN NOR MIZAM", classId: "1A" },
+    { id: "S1015", name: "MUHAMMAD FAIZ BIN SARIFIN", classId: "1A" },
+    { id: "S1016", name: "MUHAMMAD FARHAN FIRDAUS BIN MUHAMAD RAHMAD", classId: "1A" },
+    { id: "S1017", name: "MUHAMMAD FAYYADH BIN AMIR LOKMAN", classId: "1A" },
+    { id: "S1018", name: "MUHAMMAD HADIF WAFIY BIN MOHD MUSTAFA ARIFIN", classId: "1A" },
+    { id: "S1019", name: "MUHAMMAD ZHAFRAN BIN MUSLIM", classId: "1A" },
+    { id: "S1020", name: "MUHAMMAD ZIYAD HASIF BIN ZURAIDI", classId: "1A" },
+    { id: "S1021", name: "NOR HUMAIRAH BINTI MOHAMAD HAFIZ", classId: "1A" },
+    { id: "S1022", name: "NUR AISY AFINA BINTI MOHAMAD AZUAN", classId: "1A" },
+    { id: "S1023", name: "NUR ALIESYA ADRIYANA BINTI RAMLY", classId: "1A" },
+    { id: "S1024", name: "NUR DINI BINTI MUSLIM", classId: "1A" },
+    { id: "S1025", name: "NUR DIYANA ADELIA BINTI ABDULLAH", classId: "1A" },
+    { id: "S1026", name: "NUR HIDAYAH FATIHA BINTI NORIZAM", classId: "1A" },
+    { id: "S1027", name: "NUR SYAFIQAH NATASHA BINTI ARAYANIZAM", classId: "1A" },
+    { id: "S1028", name: "NURHELIZA BINTI MUSTAFA", classId: "1A" },
+    { id: "S1029", name: "PUTRI QALISYA NURQASRINA BINTI MOHD AMIN", classId: "1A" },
+    { id: "S1030", name: "SITI AISYAH BINTI HOSEN", classId: "1A" },
+    { id: "S1031", name: "SITI NURDAMIA QAISARA BINTI ABDUL RAHMAN", classId: "1A" },
+    { id: "S1032", name: "SITI SYAHIDA ALIEYA BINTI MOHD SAIFUL SHAH", classId: "1A" },
+    { id: "S1033", name: "SYAKIR RIZQI BIN MOHD SARUDIN", classId: "1A" },
+
+    // --- FORM 4 CLASS 4C ---
+    { id: "S4C01", name: "ADAM MUDZAQIR BIN ABDULLAH", classId: "4C" },
+    { id: "S4C02", name: "AFIFF FAUZAN BIN KHAIRUL ARIFFIN", classId: "4C" },
+    { id: "S4C03", name: "AKMAL RIFQI AIMAN BIN MOHD HAIREEL", classId: "4C" },
+    { id: "S4C04", name: "DANIAL HANNAN BIN AB HAPID", classId: "4C" },
+    { id: "S4C05", name: "GHAZLAN BASRI BIN GHAZALI", classId: "4C" },
+    { id: "S4C06", name: "HANIE SALSABIELA BINTI AHMAD POZI", classId: "4C" },
+    { id: "S4C07", name: "IMAN HARITH BIN BAHTIAR", classId: "4C" },
+    { id: "S4C08", name: "IRIS BATRISYIA BINTI AZHARAR", classId: "4C" },
+    { id: "S4C09", name: "MARSHA BATRISHA BINTI MOHD FITERIEE", classId: "4C" },
+    { id: "S4C10", name: "MOHAMAD DANIEL FADHULLAH BIN MOHD RAMLI", classId: "4C" },
+    { id: "S4C11", name: "MOHAMAD FAHMY AIMAN BIN MD NORAZMAN", classId: "4C" },
+    { id: "S4C12", name: "MOHAMAD RAYYAN HAFIZI BIN MOHAMAD RAFFI", classId: "4C" },
+    { id: "S4C13", name: "MOHAMAD SINAN BIN ABD HAMID", classId: "4C" },
+    { id: "S4C14", name: "MUAZ BIN ROZANI", classId: "4C" },
+    { id: "S4C15", name: "MUHAMMAD AARON ZIDANE BIN AZREE", classId: "4C" },
+    { id: "S4C16", name: "MUHAMMAD AQIL AISY BIN SAMSURI", classId: "4C" },
+    { id: "S4C17", name: "MUHAMMAD HARIZ ZAQWAN BIN MOHAMMAD HAFEZ", classId: "4C" },
+    { id: "S4C18", name: "MUHAMMAD HARRIS IRFAN BIN MOHD AIZULAZRIN", classId: "4C" },
+    { id: "S4C19", name: "MUHAMMAD IMADUDDIN BIN YUSMAWI", classId: "4C" },
+    { id: "S4C20", name: "MUHAMMAD RAYYAN AL FARD BIN JA'AFAR", classId: "4C" },
+    { id: "S4C21", name: "NOR ASYIKIN BINTI FHADLI ANSYARI", classId: "4C" },
+    { id: "S4C22", name: "NUR AFZA DANIA BINTI MUHAMMAD YAZID", classId: "4C" },
+    { id: "S4C23", name: "NUR ARIFAH BALQIS BINTI SYED ALI", classId: "4C" },
+    { id: "S4C24", name: "NUR AZIRA BINTI ASYARI", classId: "4C" },
+    { id: "S4C25", name: "NUR ISMA BATRISYIA BINTI TUAH ISMAIL", classId: "4C" },
+    { id: "S4C26", name: "NUR SHAFFARREESSA BINTI MOHAMAD KARIM", classId: "4C" },
+    { id: "S4C27", name: "NURALEESYA AISYAH BINTI ZAIDI", classId: "4C" },
+    { id: "S4C28", name: "NURSHAZIA BALQIS BINTI MUHAMMAD HAFIZ", classId: "4C" },
+    { id: "S4C29", name: "NURUL SYUHADAH BINTI IKHSAN", classId: "4C" },
+    { id: "S4C30", name: "PUTERI DAYANA NORHISHAM BINTI ABDUL FATTAH", classId: "4C" },
+    { id: "S4C31", name: "PUTERI NADIAH NUR DIYANAH BINTI JAMALUDIN", classId: "4C" },
+    { id: "S4C32", name: "PUTRA AL AFIQ BIN ABDUL KADER", classId: "4C" },
+    { id: "S4C33", name: "PUTRI ROS BATRISYIA BINTI MD ZAKI", classId: "4C" },
+    { id: "S4C34", name: "QAILESYA IMAN BINTI NORAZMAN", classId: "4C" },
+    { id: "S4C35", name: "SITI NORAINI BINTI MOHD SEFIEE", classId: "4C" },
+    { id: "S4C36", name: "SITI NURZARA SOFIA BINTI ABDUL RAHMAN", classId: "4C" },
+
+    // --- FORM 4 CLASS 4G ---
+    { id: "S4G01", name: "ABIL HASSAN SAZULI BIN MASZAMAN", classId: "4G" },
+    { id: "S4G02", name: "EMEER RIZQI BIN MUSA", classId: "4G" },
+    { id: "S4G03", name: "IQMAL FIRAS BIN ABDULLAH", classId: "4G" },
+    { id: "S4G04", name: "IRHAM NUR HAFIY BIN IRMAN", classId: "4G" },
+    { id: "S4G05", name: "MIZA EZZATY BINTI MAZPPAR", classId: "4G" },
+    { id: "S4G06", name: "MOHAMAD ADAM BIN MOHD AZRI", classId: "4G" },
+    { id: "S4G07", name: "MOHAMAD AMIRUL ALIFF BIN MOHD. YAKUB", classId: "4G" },
+    { id: "S4G08", name: "MOHAMAD AMIRUL IZMA BIN ABDULLAH", classId: "4G" },
+    { id: "S4G09", name: "MOHAMAD KHAIRUL NIZAM BIN NORHAFIZAN", classId: "4G" },
+    { id: "S4G10", name: "MUHAMMAD AIDIL QAYYUM BIN JOHAN", classId: "4G" },
+    { id: "S4G11", name: "MUHAMMAD ANNAS AIDIL HAFIZI BIN MOHD LIK RIDZUAN", classId: "4G" },
+    { id: "S4G12", name: "MUHAMMAD AQIL ZAKWAN BIN MISNAN", classId: "4G" },
+    { id: "S4G13", name: "MUHAMMAD BAZLI BIN KAPRAWI", classId: "4G" },
+    { id: "S4G14", name: "MUHAMMAD HAZRIQ ZAKQWAN BIN AZLAN", classId: "4G" },
+    { id: "S4G15", name: "MUHAMMAD IQBAL FIRDAUS BIN N IMAM", classId: "4G" },
+    { id: "S4G16", name: "MUHAMMAD KHAIRIL BIN ABDULLAH", classId: "4G" },
+    { id: "S4G17", name: "MUHAMMAD NORIRFAN BIN ABDULLAH", classId: "4G" },
+    { id: "S4G18", name: "MUHAMMAD SAHKIL BIN ABDUL LATIFF", classId: "4G" },
+    { id: "S4G19", name: "MUHAMMAD SHAFIQ ISKANDAR BIN ABDULLAH", classId: "4G" },
+    { id: "S4G20", name: "NORRISANORWANI BINTI MOHD KHAIRUL RIZA", classId: "4G" },
+    { id: "S4G21", name: "NUR AQILAH ZULAIKHA BINTI ZULAFRIZAL", classId: "4G" },
+    { id: "S4G22", name: "NUR CHEMPAKA SOFEA BINTI ANIZL", classId: "4G" },
+    { id: "S4G23", name: "NUR HASYIKIN", classId: "4G" },
+    { id: "S4G24", name: "NUR LIYANA ALISHA BINTI YUSMAN", classId: "4G" },
+    { id: "S4G25", name: "NURUL ANISA IZZATI BINTI BAKHTIAR", classId: "4G" },
+    { id: "S4G26", name: "NURUL AZMEERA HARLINAWATI BINTI MOHD AZHAR", classId: "4G" },
+    { id: "S4G27", name: "NURUL HAMIZAH BINTI ZAIMI", classId: "4G" },
+    { id: "S4G28", name: "RAJA HAIRUL IMAN BIN RAJA MD HAREL", classId: "4G" },
+    { id: "S4G29", name: "SHAH RAMADHAN BIN A HALIM SAH", classId: "4G" },
+    { id: "S4G30", name: "SHAH REEZA FIQRI BIN JALALUDIN", classId: "4G" },
+    { id: "S4G31", name: "SIRIN BINTI HALIM", classId: "4G" },
+    { id: "S4G32", name: "SITI FELISA", classId: "4G" },
+    { id: "S4G33", name: "ZHAREFF DANIEL BIN AZMI", classId: "4G" },
+
+    // --- FORM 5 CLASS 5A ---
+    { id: "S5A01", name: "ALIEF HAMZAH BIN MUSLIM", classId: "5A" },
+    { id: "S5A02", name: "ALISHA SYAHZERA BINTI ASMAWI", classId: "5A" },
+    { id: "S5A03", name: "ALYA QAISARA BINTI MUSLIM", classId: "5A" },
+    { id: "S5A04", name: "AMIRAH ARINAH BINTI AZMAN", classId: "5A" },
+    { id: "S5A05", name: "DANIA HUMAIRA BINTI FAUZI", classId: "5A" },
+    { id: "S5A06", name: "FAREEL IKHWAN BIN AYUB", classId: "5A" },
+    { id: "S5A07", name: "FARIS SYAZWAN BIN MOHD SAIFUL", classId: "5A" },
+    { id: "S5A08", name: "HUSNA SYAKIRAH BINTI ZAMZAM", classId: "5A" },
+    { id: "S5A09", name: "INTAN NABILA BINTI AZMI", classId: "5A" },
+    { id: "S5A10", name: "LIYANA HAZIRAH BINTI DZULKIFLEE", classId: "5A" },
+    { id: "S5A11", name: "MOHAMAD NUR HAIMAN BIN JAMIL", classId: "5A" },
+    { id: "S5A12", name: "MUHAMMAD DZAL AIDI BIN MOHD HASIM", classId: "5A" },
+    { id: "S5A13", name: "MUHAMMAD KHALISH BIN MOHD BAKTHIAR", classId: "5A" },
+    { id: "S5A14", name: "MUHAMMAD NABIL IRFAN BIN MOHD NASRUL", classId: "5A" },
+    { id: "S5A15", name: "NUR AIMAN BIN RUMIZAN", classId: "5A" },
+    { id: "S5A16", name: "NURIN SYAFIQAH BINTI ROMSAH", classId: "5A" },
+    { id: "S5A17", name: "NURUL AISYA DAMIA BINTI MOHD FASANI", classId: "5A" },
+    { id: "S5A18", name: "NURUL MUBASHIRAH BINTI ABDUL KARIM", classId: "5A" },
+
+    // --- FORM 5 CLASS 5G (Gemilang) - Teacher Syarina ---
+    { id: "S5G01", name: "ADRIANA NUR JANNAH BINTI AHMAD", classId: "5G" },
+    { id: "S5G02", name: "AHMAD DHANI BIN ABDULLAH", classId: "5G" },
+    { id: "S5G03", name: "AIDID SYAFWAN BIN SAIFUL", classId: "5G" },
+    { id: "S5G04", name: "EMRAN YUSOF BIN AMZAH", classId: "5G" },
+    { id: "S5G05", name: "MOHAMAD AZIB BIN MOHAMED", classId: "5G" },
+    { id: "S5G06", name: "MOHAMATHIRUL RIGFAN BIN MOHD KHAIRUL RIZA", classId: "5G" },
+    { id: "S5G07", name: "MUHAMMAD ADI PUTRA BIN ANIM", classId: "5G" },
+    { id: "S5G08", name: "MUHAMMAD AMMAR AIMAN BIN NORLIZAM", classId: "5G" },
+    { id: "S5G09", name: "MUHAMMAD HAFIZ BIN ABDULLAH", classId: "5G" },
+    { id: "S5G10", name: "MUHAMMAD HASAN BIN RANO", classId: "5G" },
+    { id: "S5G11", name: "MUHAMMAD SHAHFIQ BIN AZIMI", classId: "5G" },
+    { id: "S5G12", name: "MUHAMMAD TAUFIQ BIN ABDULLAH", classId: "5G" },
+    { id: "S5G13", name: "NORSIHMAH BINTI HUSIN", classId: "5G" },
+    { id: "S5G14", name: "NUR AMINA BINTI SHAM", classId: "5G" },
+    { id: "S5G15", name: "NUR WAZNAH BINTI IKHWAN", classId: "5G" },
+    { id: "S5G16", name: "PUTERI QALIESYA MAISARAH BINTI ABDUL RAHMAN", classId: "5G" },
+    { id: "S5G17", name: "PUTRI NUR ARIRA BINTI ABDUL KAHAR", classId: "5G" },
+    { id: "S5G18", name: "SAYYIDAH ZAHRA BINTI ABDULLAH", classId: "5G" },
+    { id: "S5G19", name: "SYAMIERA ANTASYA BINTI ABDULLAH", classId: "5G" },
+
+    // --- FORM 5 CLASS 5E ---
+    { id: "S5E01", name: "AHMAD DANISH BIN IRWAN", classId: "5E" },
+    { id: "S5E02", name: "ALIF LUQMAN NAZRIQ BIN NAZREE", classId: "5E" },
+    { id: "S5E03", name: "DHANIYAH SYAFIQA BINTI MOHD NASIR", classId: "5E" },
+    { id: "S5E04", name: "EZZAD MIRZA AZARI BIN ABDULLAH", classId: "5E" },
+    { id: "S5E05", name: "MICHELLE NURQISTINA AFLIN BINTI AFRIZAL", classId: "5E" },
+    { id: "S5E06", name: "MOHAMAD AFRIZAL BIN MAHDIR", classId: "5E" },
+    { id: "S5E07", name: "MOHAMAD HAFIZUL BIN MOHD FATHLY", classId: "5E" },
+    { id: "S5E08", name: "MOHAMAD HANIF BIN ABDULLAH", classId: "5E" },
+    { id: "S5E09", name: "MOHAMAD HASYRAF BIN HAMDAN", classId: "5E" },
+    { id: "S5E10", name: "MOHAMAD NUH IRFAN BIN JASMAN", classId: "5E" },
+    { id: "S5E11", name: "MOHAMAD ZAKWAN FARIS BIN ABDULLAH", classId: "5E" },
+    { id: "S5E12", name: "MOHAMED ALI FIRDAUS BIN ABDULLAH", classId: "5E" },
+    { id: "S5E13", name: "MUHAMMAD ADAM BIN MESNAN", classId: "5E" },
+    { id: "S5E14", name: "MUHAMMAD AKID BIN HASMIZAN", classId: "5E" },
+    { id: "S5E15", name: "MUHAMMAD ALIF IKRAM BIN KUNYEEN", classId: "5E" },
+    { id: "S5E16", name: "MUHAMMAD EZRAM BIN NORIZAM", classId: "5E" },
+    { id: "S5E17", name: "MUHAMMAD FIRDAUS HAIKAL BIN MOHAMMAD", classId: "5E" },
+    { id: "S5E18", name: "MUHAMMAD HARIZ ISKANDAR BIN NAZRI", classId: "5E" },
+    { id: "S5E19", name: "MUHAMMAD IRFAN HASFIQ BIN ABDULLAH", classId: "5E" },
+    { id: "S5E20", name: "MUHAMMAD NUR AIMAN BIN MUSTAFA", classId: "5E" },
+    { id: "S5E21", name: "MUHAMMAD RIDWAN BIN ISMAEL", classId: "5E" },
+    { id: "S5E22", name: "NOR AIN SYAMIMIE BINTI MD KHAIRUL", classId: "5E" },
+    { id: "S5E23", name: "NOR MUHAMMAD RAHMAN BIN ABDULLAH", classId: "5E" },
+    { id: "S5E24", name: "NORALIA NATASYA BINTI MOHD YASID", classId: "5E" },
+    { id: "S5E25", name: "NUR ALYAA BINTI ANUAR", classId: "5E" },
+    { id: "S5E26", name: "NUR AQIELLA ITQAN BINTI MOHD.TTAQIARAFAT", classId: "5E" },
+    { id: "S5E27", name: "NUR AYUDIYA IZZATY BINTI MOHD SURADI", classId: "5E" },
+    { id: "S5E28", name: "NUR RAFIDAH BINTI RAZALI", classId: "5E" },
+    { id: "S5E29", name: "NUR SYAMIMI RIAYANA BINTI ABDUL LATIF", classId: "5E" },
+    { id: "S5E30", name: "NURFARISHA QIRANA BINTI MASRUDI", classId: "5E" },
+    { id: "S5E31", name: "RAJA ZULHAIRIE BIN RAJA MOHD ZULFAKAR", classId: "5E" },
+    { id: "S5E32", name: "SAYYIDA NAFISYA BINTI MOHAMAD RIDZUAN", classId: "5E" },
+    { id: "S5E33", name: "YUSUFF QAYYUM BIN JAMALUDIN", classId: "5E" },
+
+    // --- FORM 5 CLASS 5D ---
+    { id: "S5D01", name: "AHMAD DANISH ZAFRAN BIN MOHD HAFIZUL AMRU", classId: "5D" },
+    { id: "S5D02", name: "AHMAD DARWIS BIN ABDULLAH", classId: "5D" },
+    { id: "S5D03", name: "AZIZATUL SYAFIRA BINTI MOHD ARFAH", classId: "5D" },
+    { id: "S5D04", name: "MOHAMAD DANIS IKWAN BIN MOHD RAZID", classId: "5D" },
+    { id: "S5D05", name: "MOHAMAD DANISH AQIF BIN RAMLAN", classId: "5D" },
+    { id: "S5D06", name: "MOHAMAD KHAIRUL NIZAM BIN FARID", classId: "5D" },
+    { id: "S5D07", name: "MOHAMAD WAFFIE ZIKRI BIN ABDULLAH", classId: "5D" },
+    { id: "S5D08", name: "MUHAMMAD ALIF SYAFIE BIN IDRIS", classId: "5D" },
+    { id: "S5D09", name: "MUHAMMAD ALIFF HAIQAL BIN ZAILAN", classId: "5D" },
+    { id: "S5D10", name: "MUHAMMAD AMIR AMSYAR BIN ISKANDAR", classId: "5D" },
+    { id: "S5D11", name: "MUHAMMAD AQEEF BIN ZAIDI", classId: "5D" },
+    { id: "S5D12", name: "MUHAMMAD FARHAN AIMAN BIN ZAIDI", classId: "5D" },
+    { id: "S5D13", name: "MUHAMMAD FIRDAUS BIN MAMMI", classId: "5D" },
+    { id: "S5D14", name: "MUHAMMAD HELMI BIN MOHD SALLEH", classId: "5D" },
+    { id: "S5D15", name: "MUHAMMAD MEKAIL ZAKI BIN RAHMAT", classId: "5D" },
+    { id: "S5D16", name: "MUHAMMAD NABIL BIN ABDULLAH", classId: "5D" },
+    { id: "S5D17", name: "MUHAMMAD RAZIQ HAIQAL BIN ABDULLAH", classId: "5D" },
+    { id: "S5D18", name: "MUHAMMAD SYAHMIE BIN ZAKI", classId: "5D" },
+    { id: "S5D19", name: "MUHAMMAD ZIKRI BIN SARIFIN", classId: "5D" },
+    { id: "S5D20", name: "NUR ALISSYA FAZIRA BINTI MOHD ZAMRI", classId: "5D" },
+    { id: "S5D21", name: "NUR DAFINAH DAMIA BINTI MOHD YUSRY", classId: "5D" },
+    { id: "S5D22", name: "NUR FARRAH QISTINA BINTI MOHAMAD", classId: "5D" },
+    { id: "S5D23", name: "NUR ZULAIKHA BINTI MOHD ALWI", classId: "5D" },
+    { id: "S5D24", name: "NURHAZIMAH BINTI ZAINI", classId: "5D" },
+    { id: "S5D25", name: "PUTRI NAURA IRISNAJWA BINTI MOHD AMIN", classId: "5D" },
+    { id: "S5D26", name: "RAUDAHTUL JANNAH BINTI ISMAIL", classId: "5D" },
+    { id: "S5D27", name: "SHURIYA A/L CHANDRAN", classId: "5D" },
+    { id: "S5D28", name: "SITI AISAH BINTI MOHD RIZWAN", classId: "5D" },
+    { id: "S5D29", name: "SITI NADIAH BINTI AZMAN", classId: "5D" },
+    { id: "S5D30", name: "SITI NUR FITRI ATIQAH BINTI ABDULLAH", classId: "5D" },
+    { id: "S5D31", name: "SITI NUR NABILA", classId: "5D" },
+    { id: "S5D32", name: "SITI SAFIYAH AMIRAH BINTI MOHD SAIFUL SHAH", classId: "5D" },
+    { id: "S5D33", name: "SYED MAHMUD BIN SYED MOHSIN", classId: "5D" },
+    { id: "S5D34", name: "WAN NUR AMIERA QALISHA BINTI WAN ZAIRUL ANUAR", classId: "5D" },
+    { id: "S5D35", name: "ZULKARNAIN BIN YUSZAMRI", classId: "5D" },
+
+    // --- FORM 5 CLASS 5F ---
+    { id: "S5F01", name: "ABDUL NAJID BIN MUSA", classId: "5F" },
+    { id: "S5F02", name: "EIMAN RIFQI BIN MUSA", classId: "5F" },
+    { id: "S5F03", name: "MUHAMMAD AQIFF FIRDAUS BIN YUSNI", classId: "5F" },
+    { id: "S5F04", name: "MUHAMMAD FARHAN HAFIZI BIN ABDULLAH", classId: "5F" },
+    { id: "S5F05", name: "MUHAMMAD FARISH BIN ABDULLAH", classId: "5F" },
+    { id: "S5F06", name: "MUHAMMAD FAUZI FITRI BIN REDUAN", classId: "5F" },
+    { id: "S5F07", name: "MUHAMMAD FIRDAUS BIN ABDULLAH", classId: "5F" },
+    { id: "S5F08", name: "MUHAMMAD HAIKAL HAKIMI BIN MOHD AIZULAZRIN", classId: "5F" },
+    { id: "S5F09", name: "MUHAMMAD NUR MIKAIL BIN BOBAY @ MUSTAFFA", classId: "5F" },
+    { id: "S5F10", name: "NOR AZIZAH BINTI AZMAN", classId: "5F" },
+    { id: "S5F11", name: "NUR IRA MUJAHIDAH BINTI IBRAHIM", classId: "5F" },
+    { id: "S5F12", name: "NUR NAJWA ASYILAH BINTI MOHAMMAD NIZAM", classId: "5F" },
+    { id: "S5F13", name: "NUR QALESSYA BINTI MD SAIFUL", classId: "5F" },
+    { id: "S5F14", name: "NURFADILAH BINTI ABDULLAH", classId: "5F" },
+    { id: "S5F15", name: "NURSYAFIRA BALQIS BINTI DARMAWAN", classId: "5F" },
+    { id: "S5F16", name: "NURUL NADIA IDAYU BINTI ABDULLAH", classId: "5F" },
+    { id: "S5F17", name: "NURUL NAJWA BINTI IHSAN", classId: "5F" },
+    { id: "S5F18", name: "PUTERI AL JANNAH BINTI SAHARUDIN", classId: "5F" },
+    { id: "S5F19", name: "RYANNIE BINTI JONNY", classId: "5F" },
+    { id: "S5F20", name: "SANJEEV KHANNA A/L SURESH", classId: "5F" },
+    { id: "S5F21", name: "SITI FATIMAH BINTI OMAR", classId: "5F" },
+    { id: "S5F22", name: "THARANESWARY A/P SURESH", classId: "5F" }
+  ];
+
+  // Helper function to get students by class
+  function getStudentsByClass(selectedClass) {
+    // First try masterStudentDatabase
+    const fromMaster = masterStudentDatabase.filter(student => student.classId === selectedClass);
+    if (fromMaster.length > 0) return fromMaster;
+    
+    // Fall back to classStudents for all other classes
+    const names = classStudents[selectedClass] || [];
+    return names.map((name, index) => ({
+      id: `${selectedClass}-${index}`,
+      name: name,
+      classId: selectedClass
+    }));
+  }
+
+  // Update formLS to include Form 3-5
+  const formsData = {
+    "1": { label: "Form 1" },
+    "2": { label: "Form 2" },
+    "3": { label: "Form 3" },
+    "4": { label: "Form 4" },
+    "5": { label: "Form 5" }
+  };
+
+  // Keep legacy classStudents for other tabs (will be replaced)
+  const classStudents = {
+    "1A": ["AHMAD ZAFRI BIN AHMAD NOORHAIZEM","AMMAR ISKANDAR BIN MAHATHIR","AREESA DERLISA BINTI SAWAL","ASHFIEZARRA BINTI AZMI","DANIEL RAFIQ KONG BIN ABDUL RASYID KONG","FAIZAH RAHILLA BINTI FAUZAN","HAIMI ARIL BIN HAMDAN","INTAN NURBATRISYIA RAWIYANI BINTI MAHANI","MUHAMMAD AMIR FIRDAUS BIN ABDULLAH","MUHAMMAD AZEEQ BIN ABDUL LATHEEF","MUHAMMAD AZRIL IKHWAN BIN ZAINAL ABIDIN","MUHAMMAD DANIEL BIN HERMAN","MUHAMMAD DANISH ASHRAAF BIN SYAH RIZAL","MUHAMMAD DANISH MUHKLIS BIN NOR MIZAM","MUHAMMAD FAIZ BIN SARIFIN","MUHAMMAD FARHAN FIRDAUS BIN MUHAMAD RAHMAD","MUHAMMAD FAYYADH BIN AMIR LOKMAN","MUHAMMAD HADIF WAFIY BIN MOHD MUSTAFA ARIFIN","MUHAMMAD ZHAFRAN BIN MUSLIM","MUHAMMAD ZIYAD HASIF BIN ZURAIDI","NOR HUMAIRAH BINTI MOHAMAD HAFIZ","NUR AISY AFINA BINTI MOHAMAD AZUAN","NUR ALIESYA ADRIYANA BINTI RAMLY","NUR DINI BINTI MUSLIM","NUR DIYANA ADELIA BINTI ABDULLAH","NUR HIDAYAH FATIHA BINTI NORIZAM","NUR SYAFIQAH NATASHA BINTI ARAYANIZAM","NURHELIZA BINTI MUSTAFA","PUTRI QALISYA NURQASRINA BINTI MOHD AMIN","SITI AISYAH BINTI HOSEN","SITI NURDAMIA QAISARA BINTI ABDUL RAHMAN","SITI SYAHIDA ALIEYA BINTI MOHD SAIFUL SHAH","SYAKIR RIZQI BIN MOHD SARUDIN"],
+    "1B": ["ABDUL RAYHAN SAYF BIN ABDUL RAMON","EMEER NUR MIKHAEL BIN JAMADIH","FARISH DHANI BIN ISMAIL","KHALISH UMAR BIN KHAIRUL ANWAR","MOHAMAD FARISZUDIN BIN MOHAMAD FAZLI","MOHAMAD ZIQRI BIN KAMARUDIN","MUHAMMAD AABID MUYASSAR BIN AMINUDDIN","MUHAMMAD ADAM SYAH BIN JAPRI","MUHAMMAD ALIF SUFI BIN ABDUL HALIL","MUHAMMAD HARIZ HIDAYAT BIN MOHD YAHYA","MUHAMMAD ISYRAF BIN AIZAM","MUHAMMAD JIHAD BIN TAHIR","MUHAMMAD KHALIS NURHAN BIN MD HAN","MUHAMMAD RAYYAN HARITH BIN MOHAMAD HAFIZ","MUHAMMAD RAYYAN RIZQI BIN MOHD YUSOFF","MUHAMMAD RAYYAN ZIQRI BIN MOHD YUSOFF","MUHAMMAD RIZQY IRFAN BIN SAID NOOR","MUHAMMAD YUSUF HAKIM BIN ISMAIL","NOOR FERLYN ANISAH ARISSA BINTI MOHD FAIZAL","NUR AFINA DANISHAH BINTI MUHAMMAD YAZID","NUR KHALISHAH UMAIRAH BINTI AHMAD FAHMI","NUR RADHIAH ZAHIRAH BINTI ROSDI","NURUL BATRISYIA BINTI JASMAN","NURUL DAMIA BALQIS BINTI AHMAD FIKRI","NURUL NUR IMAN BINTI ABDUL RAZAK","PUTERI AUNI AMANI BINTI ABDULLAH","PUTERI HANINDA AULIA BINTI NORAZMI","QIESYA RANIA BINTI AZARI","RIFQI ARSYAD BIN HALIS","SHARIFAH SAIDATINA AISYAH BINTI SYED ABDULLAH","SITI HAZWANI BINTI MOHD ZAIYUSKAIRI","SITI NUR FITRI AQIRAH BINTI NOOR AZMAN","SITI NURUL ASYIQIN BINTI SAMSUDIN","SITI SHAFWANEE BINTI FITRI","UMMU RAUDHAH BINTI ZAHARI"],
+    "1C": ["AMIR BIN AZIZ","DEWI QALLIESYAH BASHEERA BINTI NORRADIN","KHALISYA UMAIRA BINTI ABDULLAH","LAILATUL ISLAMIAH BINTI MD NASIR","MOHAMAD DANISH THAQIF BIN MOHD HAIRI","MOHAMAD HAZAMI BIN JAFRI","MOHAMAD RAFANDI BIN RAMLI","MUHAMMAD AKIF HAKIMI BIN ABDULLAH","MUHAMMAD AQIL HAZIQ BIN MOHD FARED","MUHAMMAD DANISH BIN ZULKIPLI","MUHAMMAD HAFIZ DANISH BIN MOHD MIRWAN","MUHAMMAD HAIRUL BIN LAILEE","MUHAMMAD JIBBRAIL BIN HANAFI","MUHAMMAD RAMADHANI BIN ABDULLAH","MUHAMMAD RAYYAN AZHARI BIN KHAIRUL IDZHAR","MUHAMMAD SYAZRIEE BIN SUHAIMIEE","NUR AINUN IMAN BINTI MOHD HASRUL","NUR AISYAH BINTI MISBAH","NUR BATRISYA BINTI ABDULLAH AHMAD","NUR IZZARA ZALFEA BINTI MOHAMAD FAIZAL","NUR IZZLIN BINTI ABDULLAH","NUR SAIDATUL NAFISA BINTI SAIDON","NUR UMMYYANIE BINTI MOHD RIZAL","NURAINA NATASYA BINTI MOHAMAD YUSRI","NURUL NABILAHUDA BINTI ABDUL KARIM","NURUL NADZIRAH BINTI DZULKIFLEE","NURUL NAZIHAH SAFIYA BINTI SUFIAN EFFENDY","NUURNASHIRAH ALYAA BINTI SAMURI","QHALISA ATHILAH BINTI SARUL","RAFIQIN BIN RACHMAT","RAYYAN IZZ IRFAN BIN MUHAMAD AZRI","RAYZA ADRIANSYAH BIN ASYARI","SHAIKH MOHAMAD AMMAR BIN SHAIKH MOHD ALWI"],
+    "1D": ["ABYAN HAFEEZ BIN MUHAMMAD FIRDAUS","ALIYA ZAFIRA BINTI MOHAMAD FIRDAUS","MOHAMAD AHMAD SHAH BIN AHAMAD","MOHAMAD ALIF NAJWAN BIN AZMAN","MOHAMMAD HAKIM BIN SURAJI","MUHAMMAD ASYRAF BIN ABDUL MAJID","MUHAMMAD CARL DARWISH BIN MOHD FAIZAL","MUHAMMAD DANISH AFI BIN ABIDIN","MUHAMMAD FARHAN ZAQRI BIN ABDULLAH","MUHAMMAD FATEH BIN ABD HAFIZ","MUHAMMAD FIRASH ARSYAD BIN MOHAMAD AZRIL","MUHAMMAD HADIF ASWAD BIN MOHD HISMA NAZLI","MUHAMMAD HAIRUL BIN LAILEE","MUHAMMAD ISKANDAR BIN HUSIN","MUHAMMAD ISMAIL BIN AHMAD","MUHAMMAD RIFQI DANIAL BIN ABDUR RAHMAN","MUHAMMAD ROSYAM BIN ROSLEY","MUHAMMAD ZAKI BIN SANI","NINI SYAHIRAH BINTI ZURAINEE","NUR AINUL IMANINA BINTI MAZLY","NUR ALYA UMAIRAH BINTI MOHD SHARIL","NUR DAMIA MAISARAH BINTI MOHD SHARANI","NUR QISTINA NAJWA BINTI JAMAILUDIN","NUR SYADIYAH FITRI BINTI ABDULLAH","NUR ZALIFAH BINTI MOHD ALWI","NURHIDAYAH BINTI DAUD","NURSYAFA UMAIRAH BINTI AZMAN","NURUL HASANAH BINTI ROSANAPI","NURUL RAMADHANI BINTI ABDULLAH","PUTRI DHIA AFIFAH BINTI HAFIZUL","RABIATUL SAFURA BINTI ABDUL RAHMAN","SITI NURAYUNA BINTI SA'BAN","WAN ALEYA SOFEA BINTI WAN MOHD HAFIFI"],
+    "1E": ["AINUN MARDIAH BINTI ELIYAS","AMYLIA FARHANA BINTI ABDUL RAHIM","BIBI ZAINAB BINTI FAIZAL","FRAYKRIN","HANIENAH BINTI IHWAN NURHANUDIN","JANANI A/P VIJAY KUMAR","JASON KHANNA A/L SURESH","KHAIRUN SHAHEEN SYAHMI BIN KHAIRURANNUAR","LIA AMELIA BINTI AWANG","MOHAMAD AIMAN ASHRAF BIN ABDUL 'AZIZ","MOHAMAD HAKIMI BIN ABDULLAH","MUHAMMAD AFIS RAHMAT BIN ABDUL AZIZ","MUHAMMAD AIDID ASHRAF BIN MOHD SHAHRIL","MUHAMMAD AZIQ RIZWAN BIN MOHD HANAFI","MUHAMMAD DANIAL BIN MUHAMAD NOH","MUHAMMAD FARIZ AIMAN BIN ZAIDI","MUHAMMAD FATHI FARHAD BIN ABDULLAH","MUHAMMAD SHAMIRUL BIN MUHAMMAD SHAFRIN","MUHAMMAD SYAFIQ HAIKAL BIN ABDULLAH","MUHAMMAD SYAZWAN BIN SABRI","NAVNETHAN A/L NATHAN","NUR HADHINAH BINTI SIHODA","NUR HAJAR HADHIRAH BINTI MOHD SA'RONI","NUR INSYIRAH BINTI YAAKUB","NUR SUMAYYAH HUSNA BINTI HASSRUL HAKIM","NUR ZAHRAH ZUYYIN BINTI RIDZAUDIN","NURUL DAMIA BINTI MOHD FIRDAUS","NURUL SYUHADA BINTI MOHAMAD","PUTERI NUR ATIQAH BINTI ZAINORDIN","QHAHIR AIMAN BIN NIK ADNAN","RAJA ROSE SYAZWANA BINTI RAJA MD HAREL","SAIDATUL UMMI UMAIRAH BINTI ABDULLAH","SHAH RAFIQ IQBAL BIN ZAIRUL","SYAZALIYANA BINTI JANAN"],
+    "1F": ["AHMAD AL JAILANI BIN EDY SISWANTO","AISYAH MARISSA BINTI HELMI","IMAN NUR QAIS BIN MOHD RAFI'EE","ISZARA MAISARAH BINTI ISHAK","KAISAH NABILA BINTI ASMADI","MOHAMAD ZIKRY FIRASH BIN ZULKAFLI","MOHAMED DAIM ASYRAF BIN IBRAHIM","MUHAMAD ALIFF HAMIZAN BIN MUHAMAD HAMDAN","MUHAMMAD BIN ABDUL WAHAB","MUHAMMAD DANIEL AIMAN BIN MOHD RAFI","MUHAMMAD DARWISY AMSYYAR BIN MD.ALFALAH","MUHAMMAD FIRAS AISY BIN NURUL APENDI","MUHAMMAD HAFIZUDDIN BIN MOHD LIK RIDZUAN","MUHAMMAD LUQMAN HAQIM BIN SALLEH","MUHAMMAD NASUHA BIN AYUB","MUHAMMAD SYAHRIL IZAD BIN ZUL AZLAN","MUZAKKIR ZULHELME BIN ABDULLAH","NA IL HARIS BIN HASROL","NAUFAL NUQMAN SHAH BIN MOHD FAIZAL","NOOR ALLEAH SARAH BINTI SHAIFIROL","NORDHIYA FARHANA BINTI HABIB","NUR DANIA UMAIRAH BINTI FAUZI","NUR EDRIANA EL ZAHRA BINTI ABDUL FATTAH","NUR FARISYAH BINTI MOHD HAFEZ","NUR FARISYAH NABILAH BINTI MUHAMAD EFFENDI","NUR QHAISARAH AMANI BINTI MOHD FAHRUL ROZI DOMORA","NUR SYAHIDA IZARA BINTI RISYANTO","NUR SYAQIELA FARHANAH BINTI ABDULLAH","NURSYAHIRA AQILA BINTI NORAZAM","NURUL AQIELA BINTI MOHD FIRUS YAZID","PUTERI NURAWATIF BINTI YUSNI","SITI AIRIN NISAH BINTI SYAMSUL"],
+    "1G": ["AHMAD DAFA IKRAM BIN ABDULLAH","ANIS NADIA BINTI SELAMAT","AQEEF SYAHMI BIN SAIFUL","FIRASH ARSYAD BIN ABDULL JALIL","MIASARAH ARIANA BINTI MOHAMAD MUSTAQIM","MOHAMAD NAFIS ZIKNI BIN ABD RAHMAN","MOHAMAD RAYYAN RAYQAL BIN MOHD HARIET","MUHAMMAD ADAM FIRDAUS BIN MD SALIM","MUHAMMAD FADHIL RAMADHAN BIN ANTIK YUSFIZAL","MUHAMMAD FARIZ BIN RAZALI","MUHAMMAD FIRAS IMAN BIN RINO SUHENDRA","MUHAMMAD FITRI SYAWAL BIN MUHAMAD ADIF ADHA","MUHAMMAD HAFIZI BIN SAIFUL IZWAN","MUHAMMAD HAIRUL ZIKRI BIN HASRULIZWAN","MUHAMMAD IMAN MIQHAIL BIN MOHD AIDIL","MUHAMMAD IZZAT SHAHRIL BIN MOHAMMAD IZZAT SYARAFFI","MUHAMMAD QAYYIM INAS BIN JEFRI RIZAL","NUR ALIA IZZAHTUL BINTI AZLAN","NUR BALQIS BINTI ABDULLAH","NUR DHIA IRSALINA BINTI KHAIRUL AZHAR","NUR HAIDA NADIRAH BINTI AHMAD","NUR IZZATI BINTI MUBARAK HAFIZI","NUR KASIH BINTI ABBAS","NUR RAUDHATUL HUMAIRA BINTI MOHD KHAIRUL","NUR SHIELA BALQIS BINTI SHAFIE","NURUL ADRIANA BATRISYA BINTI AZLAN","NURUL RAIHANAH UQHAIRA BINTI MOHAMAD HAMDAN","PUTERI ELYSSA SAFFIYAH BINTI ABDUL HADI","PUTRA SYAWAL BIN ABDULLAH","RAYYAN IQBAL BIN SALEHODDIN","SITI NURAYUNI BINTI SA'BAN","SUMAYYAH HUMAIRA BINTI YAAKUB","SYAHIRAH BINTI SELAMAT"],
+    "1KAA": ["ADAM HARITH BIN NORHARIZAN","EZRY DANISH BIN EDDY AZMEER","MOHAMAD AMMAR NAUFAL BIN SAFWAN","MOHAMAD ZARIFF NAUFAL BIN MOHAMAD ZAINI","MUHAMAD NAZIM IMAN BIN MUHAMAD NAZRI","MUHAMMAD AFIF BIN AZLI","MUHAMMAD ARIQ BIN MOHD NASIR","MUHAMMAD HAMDANI AIMAR BIN MOHD HAMZAH","MUHAMMAD IZZ AZIM DANIAL BIN MOHD IZZAT","MUHAMMAD MIRZA HARRAZ BIN MUHAMMAD HAZWAN","MUHAMMAD MUAZ HADIF BIN MOHAMAD HIDIR","MUHAMMAD RAYQAL IRFAN BIN MUHAMAD ROZIE","NABILA KHALISHAH BINTI AHMAD EFENDIE","NUR AINA SOLEHAH BINTI SHUKRI","NUR AIRISH DELISHA BINTI AHMAD ZUL FAHMI","NUR AQISYAH BINTI AKIK SUFANDAS","NUR AWFIYAH BINTI ANUAR","NUR ELYANA NATASHA BINTI CHE MOHD BADRUL HISYAM","NUR JANNAH ARRISSA BINTI NORITAHUDDIN","NUR MIZA BINTI MOHD NOOR","NUR SAJIDAH SYAHMINA BINTI MOHD SALLEH","NURIN HUMAIRA BINTI KASMAWI","QARLISYA UMAIRAH BINTI ERMI ASWADI","WAN SYAAKIR BIN WAN HANAFI"],
+    "3A": ["ABDUL HAKIM BIN A.SYAWALNURHAIZAD","AFIFF SYAZWAN BIN ANDY MULYA","AINUR ADHWA RAUDHAH BINTI ROSLAN","AMIN ARIFIN BIN RASID","AZRA ADAWIYAH BINTI MOHD AZRI","DARWISY ZAFRAN BIN SHAZRUL IDHAM","DEVI AFIFATUS ZAHIROH BINTI SARWAEDI","DHIYA ANNUR ZAFEERAH BINTI MOHD HAFIZUL AMRU","FATIMAH NAQIATUL MARDHIAH BINTI MOHAMED SHAFIK","IMAN HARRIS BIN MUSTAFA","MEGAWANI SALYNIE BINTI HAMZAH","MIRZA D'LAILA BINTI NOR AZMAN","MOHAMAD ILHAM BIN MOHD NOOR HALIM","MOHAMAD ILHAM GUNAWAN RAHARDJO BIN ABDUL BASIT","MOHAMAD SYAKIR BIN SURIADI","MUHAMMAD AFIQ BIN ALI","MUHAMMAD AIDIL ZAFUAN BIN ABDULLAH","MUHAMMAD FAIQ HADIF BIN MD NORHISAM","MUHAMMAD HARITH HAZIQ BIN MOHD KHAIRULHISHAM","MUHAMMAD NAIM DANIEL BIN ABDULLAH","MUHAMMAD NAJMI HAIKAL BIN AL AMIN","MUHAMMAD UQASHAH BIN MOHD NOOR","NAFAISUL MAULIDA","NUR AIN SHAFIQAH BINTI MOHD SHAFIE","NUR AUNI ATHIRAH BINTI MOHD ARIFF","NUR HUSNA HUMAYRAA BINTI MOHD SA'RONI","NUR KHAYRA ZAHRA BINTI MISLIZAN","NUR RANIA BINTI MUHAMMAD RIPAI","NURSAHIRA BINTI ZULKIPLI","NURUL NABIHAH SOFIA BINTI ABDULLAH","NURUL NAJWA BINTI ZAINAL","PUTERI NUR ELYSA MAISARAH BINTI SAMATEA","PUTRI NURSYAZA ADRIANA BINTI MOHD YUSOFF","SHARIFAH FARISAH BINTI SYED BAKAR"],
+    "3B": ["ABDULLAH ARASY ADZIM BIN HAZIMI","AFKAR IZZUDDIN BIN HAFIZUL HAQIM","AISYAH MELISAH BINTI HELMI","ALIF FIRDAUS BIN RAZALI","ALIFF RAMADHAN BIN RIZAL","FARZZANA BINTI MOHAMAD REZA","HANNAH ZAKIRAH BINTI ABDUL MALIK","ISKANDAR ZULKARNAIN BIN NOORAZLI","IZZ NUR AMMAR BIN JAMADIH","MIA SARA AMANI BINTI ASDZHAR SHAH","MUHAMMAD AFFANDI ARIF NAZMI BIN MOHD NAZRIE","MUHAMMAD ASYRAF IZZUDDIN BIN SANUSI","MUHAMMAD HARITH SYAZWAN BIN ABDULLAH","MUHAMMAD IRHAM BIN AYOB","MUHAMMAD IRSYAD BIN NORRIZAN","MUHAMMAD SHARIFFIN BIN MOHAMED SHAM","MUHAMMAD ZAFRAN BIN MOHD NAJIB","MUSLIHUDDIN AFIQ BIN MUHLAS","NUR AIDIL BIN MOHD NIZAM","NUR ALEESYA NOFIYA BINTI MOHD GHAFOR","NUR ALYA MAISARAH BINTI ZAINAL","NUR AMIRAH NADHIRAH BINTI RAFIZAN","NUR ASYURA DAMIA BINTI NOR AZAM","NUR DANIA AMANI BINTI AZMI","NUR FATIHAH UMAIRAH BINTI ABDULLAH","NUR MUYASSAROH BINTI IKHWAN","NUR SOFIYA BINTI ABDUL SALIM","NUR ZULAIKA BINTI WAN SULAIMAN","NURFARISHA NADIRA BINTI MOHD HISMA NAZLI","NURUL JANNAH BINTI NOORIZRAQ","SITI NURQALISYAH BINTI MOHD HANAFI","SITI ZULAIKHA BINTI ABDULLAH","ZAHWA SOFIA BINTI MASUDIN"],
+    "3C": ["AHMAD HAFIY BIN HUSAINI AMIR","AHMAD HARITHAZIM BIN MOHD JAIS","AIDATUL FITRIYAH RAMADHANI BINTI ABDULLAH","ALESHA QAISARA BINTI ROMANTIKA-DAUS","ARISSA AMANI BINTI MOHD YASSIR","HAZIQ AIDIL PUTRA BIN AZHAR","HILYAH SALSABIELA BINTI AHMAD POZI","INTAN SUHADA BINTI SAMAON","MOHAMAD AKQIL BIN MOHAMED KHABIRUL ANWAR","MOHAMAD AMIR HAFIQ BIN ABDUR RAHMAN","MOHAMED RAID AHNAF ALIYAN BIN MOHAMED SAIFUL","MUHAMMAD ADAM IRFAN BIN SAHELAN","MUHAMMAD AMIRUL ASHRAF BIN ABDULLAH","MUHAMMAD AMIRUL YAHYA BIN MUHAMAD SULHAN","MUHAMMAD AQIL HAZIM BIN MOHD FARED","MUHAMMAD AWAL NAUFAL BIN ABD HANIF","MUHAMMAD DENISH SHAH BIN MD FAIZAD","MUHAMMAD HABSHAM BIN MUHAMMAD RAHMAT","MUHAMMAD HAFIZAN BIN MOHD NOH","MUHAMMAD ISKANDAR ZULKARNAIN BIN BERTANI","MUHAMMAD MUNEEB AMJAD BIN MOHAMAD SAAD","MUHAMMAD SYARUL IZZAT BIN AHMAD PADELI","NUR AIMY SURFINA BINTI SAIRILHAFZAL","NUR ALISYA BINTI MOHD LATIF","NUR ALYA NADHIRAH BINTI MOHD ANSOR","NUR ARISSA DAMIA BINTI MOHD FAIRUS AZRY","NUR QASEH IRDINA BINTI MOHD AZREEN","NUR QASEH MIA ALEESYA BINTI ABDULLAH","NUR RIYANA BINTI MUHAMMAD RIPAI","NURZAHRA KHALIESHA BINTI MOHD ISKANDAR","RAHADATUL MAIZAH BINTI ROSLAN","SAFIYA QAIRINA BINTI ABDULLAH","WARDINA SAFEERA BINTI MOHD IZAM"],
+    "3D": ["AMMAR SHAHRIL BIN SULAIMAN","HARITH ZAFRAN BIN HUSIN","KHAIRUL NAFIS SHAHMIE BIN KAMARUZAMAN","MIA MAISARAH BINTI MISA'AD","MOHAMAD DARWISH RAMAZAN BIN MANSOR","MOHAMAD NAUFFAL BIN ABDULLAH","MUHAMMAD ABDUL RAHSYID BIN RADZHAR","MUHAMMAD ADI PUTRA BIN DJEMHUMI","MUHAMMAD DANISH IMAN BIN MUHAMMAD RIDZUAN","MUHAMMAD FAIQ RAYQHAL BIN MOHAMMAD NIAZ","MUHAMMAD HAFIZ BIN ABBAS","MUHAMMAD HAFIZ BIN MASDUL YAMIN","MUHAMMAD IQBAL HAFIZ BIN MOHD TARMIZI","MUHAMMAD IRFAN ZAFRAN BIN ZABREE","MUHAMMAD NEEDAL NA'IL BIN JA'AFAR","MUHAMMAD QAYYUM BIN MUHAMMAD NASEER","MUHAMMAD RAYYAN HAZIQ BIN HADMIN","NOR ZAHWA KAMILA BINTI MOHD RONI","NUR ALIYA MAISARA BINTI MOKHTAR","NUR AZURA BINTI TAHIR","NUR DANISHA HADIRA BINTI MOHD NOORUL RIDWAN","NUR FARRA NADYA BINTI ADI KESUMA","NUR ISMAHANI PUTRI BINTI MOHD YUSOF","NUR QALEESYA QARTIKA BINTI ROSLEE","NUR QASIH QALISAH BINTI ABD.MALEK","NUR SAFIA INSYIRA BINTI SELAMAT","NUR SYAZWINA BINTI MOHAMMAD ERWAN","NURAIN MAISARAH BINTI ABDUL HALIL","NURUL EYZZAH AYUNI BINTI ABDULLAH","NURUL SYHADA BINTI MOHD SHAWAL","SHASHA LUTFIAH BINTI ABDULLAH","TUAN NUR ZAHIRAH BINTI TUAN MOHD FAUZI","UMMU HANIS BINTI MOHD SHUHAILI"],
+    "3E": ["AISYA SAFANA MOLLE","ANDI NURRIYANA ZANARIAH BINTI ABDULLAH","ARDIRA BINTI ARZAHARI","DANIAL FAHMI BIN MOHD NAZRI","MOHAMAD NOOR IKMAL AMIN BIN ABDULLAH","MUHAMMAD ADAM HAIKAL BIN MD KHAIRUL","MUHAMMAD AIMAN AZIQ BIN AZWIR","MUHAMMAD AQIEF BIN MOHD SHAHRIL","MUHAMMAD DANISH AIDIL BIN SYAHRIL","MUHAMMAD FARHAN BIN SARPAN","MUHAMMAD FARISH IRFAN BIN YUSOF","MUHAMMAD HAMZAH YASSALAM BIN HARTONO","MUHAMMAD RIZUAN BIN SENIN","MUHAMMAD SHAHZARIQ BIN MOHD SHAHRIL NIZAM","MUHAMMAD ZAHAZAM BIN ABDULLAH","NAQIUDDIN BIN ABDUL JALALUDDIN","NIK NUR AFRINA QISTINA BINTI NIK SIN","NOR FARIS BIN NORAFFANDI","NOR RASHIELA IVY BINTI ABDULLAH","NUR DINI ATIKA BINTI ABDULLAH","NUR JANNAH BINTI MOHD JOHAR","NUR MAISARAH BINTI ABDULLAH","NUR ZAHIRAH BINTI HAIRULL SHAH","NURALEESYA BALQIS BINTI MOHD RAZALI","NUREDYHANI","RAFHANAH BATRISYIA BINTI NURUL APENDI","SITI NAZIRAH BINTI AZMAN","SITI NUR AIN BINTI ROSLAN","SITI NURSYAKIRAH BINTI JAMAILUDIN","SUGAESHAN A/L SURESH","WAN SHAZWAN BIN WAN HANAFI","WANAJIHAH BINTI MD HASRIN"],
+    "3F": ["AHMAD KHALISH FIRAS BIN MOHD FIRDAUS","AIDID ZAFRAN BIN MOHD SARUDIN","AINDI FADLULLAH BIN HABIBULLAH","DEWI QALLIESYAH BATRISH BINTI NORRADIN","DINA RAISYA HUMAIRA BINTI AB BASID","JAIZA AYU QALISYA BINTI MOHD JAILANI","MOHAMAD ALIF NAUFAL BIN MOHD RIDUAN","MOHAMAD ILYAS BIN ALIAS","MOHAMAD NOR IMRAN HAKIM BIN MOHD RIDZUAN","MOHAMAD RAYYAN ZIQRI BIN MOHAMAD AZMI","MOHAMAD SAFWAN BIN ABDUL RAHMAN","MUHAMMAD ADIF FITRI BIN MOHD AIDIL","MUHAMMAD DANIEL HAIKAL BIN ISMAIL","MUHAMMAD FARIS BIN NORIMAN","MUHAMMAD HAIRUL FAZRIE BIN SUHERMAN","MUHAMMAD SHAFIQ BIN MOHD FAUZI","MUHAMMAD SHAHRUL IDHAM BIN AZIZAN","MUHAMMAD SUFIAN BIN SOBIRIN","NUR ALIA MAISARAH BINTI YAZIZ","NUR DANIA SAFIYYA BINTI ABDULLAH","NUR HAZIRAH BINTI MOHAMAD HAZI","NUR NASYUHA BINTI JANAN","NUR PUTRI SHAKILLA BINTI INDRA","NURFATIN BINTI SALLEH","NURSYUHADAH BINTI IRWAN","NURUL HIQMAH BINTI MOHD YUSOFF","PUTERI NOR SAFIYYA BINTI MOHAMAD ALIF","PUTRI NURUL HAMIYEH BINTI ABDULLAH","QISTINA QAISARA BINTI ABDULLAH","SITI HAWA BINTI OMAR","SITI NOR SYALIZA BINTI ARIFIN","SYARIFUDDIN"],
+    "3G": ["AHMAD ADRIE BIN ABD RASHID","AHMAD YUSRI BIN ABD RASHID","ALESYA IZZATI BINTI SUHAILI","MOHAMAD AMINNUR ARIFF BIN MOHD. YAKUB","MOHAMAD FAIZ BIN ABDUL GHAFAR","MOHAMAD IQBAL BIN NOR AZMAN","MOHAMAD RAFIUDDIN HAZIQ BIN AHMAD","MUHAMMAD AFIQ ZAKWAN BIN ALHATA","MUHAMMAD DANIAL FAHMI BIN MUHAMAD FAISAL","MUHAMMAD DANISH IMAN BIN ABDULLAH","MUHAMMAD FAIRUZ AKMAL BIN ABDULLAH","MUHAMMAD HARRAZ WAHIDUDDIN BIN MOHD HAZIQ","MUHAMMAD HAZIQ BIN ABDULLAH","MUHAMMAD IKHWAN RAMADHAN BIN RINO SUHENDRA","MUHAMMAD IRSHAD BIN HASSAN","MUHAMMAD ISMAIL BIN HUSIN","MUHAMMAD QUSYAIREE BIN ABDULLAH","MUHAMMAD SHARUL ZIKRI BIN HASRULIZWAN","MUHAMMAD ZULQARNAIN BIN MOHD FAIZAL","MUSTAKIM ASNADI BIN ZAMRIMAN","NOR KHAIRUL HEZAINI BIN ABDULLAH","NORFARAH NAJWA BINTI HARUN","NUR FASHA FADILAH BINTI FADIL","NUR HANI SYAFIQAH BINTI ABDULLAH","NUR QHAIRUNNISYAH BINTI ABDULLAH","NUR SYUHAIDAH BINTI ADAM","PUTERI HUMAIRAH BINTI ABDULLAH","SITI DHIA NUR ARISA BINTI ABDUR RAHMAN","SITI HALIMATULL AELYSA BINTI MOHD HAZIMIE","SITI KHAIRUNLISA BINTI SAFARUDIN","SITI NOOR ALIYAH MAISARAH BINTI ABDULLAH","TUAN NURNADIANA BINTI TUAN ISKANDAR"],
+    "3M": ["AHMAD FARISH ZUHAIRI BIN MD RIZAL","AMIRUL ARIFIN BIN AHMAD RIDHUAN","DHIA NAFEESA BINTI HASSAN","DHIA QALEESYA BINTI HASSAN","DZAL DANIE BIN MOHD HASIM","HANNAH ALHAMRAA BINTI MUHAMMAD 'ARIFFIN","KANESHKA A/P SUKUMARAN","MAHENDIRAN A/L NATHAN","MUHAMMAD AMIR ARSYAD BIN MUHAMMAD ASYRAF","MUHAMMAD ANDI QOWY ZHALIANSYAH","MUHAMMAD DANIEL ZAKY BIN NORIZAM","MUHAMMAD FAHMI HAZEEQ BIN MOHD SHEIKH","MUHAMMAD HANAFI BIN MOHD HAFEZ","MUHAMMAD IMAN HAFIY BIN HAIDIR","MUHAMMAD RAIQAL ADAM BIN MOHD RAKIESH","MUHAMMAD ZHARIF BIN MOHD SAPRI","MUSHRIFA KHAIRIYAH BINTI MUSTAFA KAMAL","NAYLI AWADAH BINTI MOHD MUSTAFA ARIFIN","NUR ADLINA NAJWA BINTI SYAFFRIZAL","NUR ALIFAH NAJWA BINTI AZMAN","NUR BAZILAH BINTI MOHD BADRI","NUR CAHAYA RIDANI BINTI SAFARI","NUR HANNAN UMAIRAH BINTI MOHD FAZLAN","NUR IZZATY UMAIRAH BINTI MOHD RAFEK","NUR MUHAMMAD ILHAM BIN MOHD NASRUL","NUR NISA BATRISYIA BINTI BUDI MURSYIDI","NUR QASEH QALISYA BINTI AZMAN","NURAISYAH BINTI SUTARJO","NURUL NAKIATUL AZWA HUSNA BINTI ABD RASHID","RUQAYYAH THAHIRAH BINTI SHAMSURI","SITI ZULAIKHA BINTI FARID","THISHA A/P KESAVAN"],
+    "1M": ["ADAM RIZQI BIN MOHAMAD RADZI","AHMAD AMALUDDIN BIN AYOB","AIDA AMELDA BINTI SAHELAN","ARYAN FAID BIN MOHD ADIB","AUNI NATRISHA BINTI NORMAN","CHRISTINA IJAH ANAK SHOGHI FATHEA","DAMIA DARWISYAH BINTI YUSOFF","DANIA ADRIANA BINTI MOHD HASIM","FARID SHAZLAN BIN MOHD SAIFUL","FATIMAH ARISSA RAIQAH BINTI MUHAMMAD ABDUH","IRFAN DANISH BIN ZAINI","IZATULNASUHA BINTI MOH. NAJIR","MUHAMAD AZHAD ZAFRAN BIN ABDULLAH","MUHAMMAD AZIZAN BIN JABIR","MUHAMMAD FAIZ ASYRAAF BIN SAADON","MUHAMMAD FARISH BIN MOHAMAD","MUHAMMAD FARISH BIN JOHAN WAHYUDIN","MUHAMMAD FARISH BIN MOHD FITERIEE","MUHAMMAD HAFIY HAZIM BIN MOHD KHAIRULHISHAM","MUHAMMAD IRFAN AQIL BIN HERMAN","MUHAMMAD JAZMI BIN HISHAM","MUHAMMAD TAUFIQ BIN YUSUF","NOR FARAH DIANA BINTI MOHD NOOR","NUR AINA SOFIA BINTI ISHAIMI","NUR ALMA ARDINA BINTI BUDI MURSYIDI","NUR IRSALINA IWANI BINTI ARISSETIAWAN","NUR NAZIFAH BINTI BIAKHROM","NUR SARAH BINTI MUHAMMAD NUR AZRI","NUR ZAHRATUL SOFEA BINTI SUHAIMI","NURUL ARISSA RANIA BINTI MUHAMMAD ASYRAF","SANJU A/P KESAVAN","SANTHOSH A/L VIGNES","TUAN AIMAN MUKHLIS BIN MUHAMAD"],
+    "2A": ["ABDUL RAYHAN SAYF BIN ABDUL RAMON","AMIRUL FAIZIN BIN AHMAD RIDHUAN","AMIRUL HAKIMI BIN AZIZ","AZRA AISYAH BINTI ABD GHAZALI","DANIA QISYA QASRINA BINTI KAMALRUDIN","FARISHA IRDINA BINTI ERWANDI","IRDINA INSYIRAH BINTI MOHAMAD HAFIZ","IRSYAD DANI BIN ISKANDAR","KEYSHA ZARA AMANI BINTI ZULKIFLI","MALIHA RAMADHANI BINTI MUSA","MOHAMAD AIDIL BIN AB KARIM","MOHAMAD DANIEL BIN NURKHOLIS","MUHAMMAD ABU D'ZHARFAN BIN ABU ZAID","MUHAMMAD ADAM MUQRIS BIN MOHD SHAFIE","MUHAMMAD ALIF ZAKWAN BIN RUSLI","MUHAMMAD FAKHRULLAH RAMZI BIN FAIZUL NIZAM","MUHAMMAD FARIS BIN MISREN","MUHAMMAD FARIS JAFNI BIN MOHD HAFIZAL","MUHAMMAD IZZAT BIN JAMRI","NIKEN ALMAIDA RAHAYU PUTERI BINTI KASIANTO","NUR IMAN MARISSA BINTI MAZLAN","NUR MAISARAH BINTI SAIFUL AZHAR","NUR SHAMIRAH BINTI ABDUL SALIM","NURALEESYA SOFIA BINTI ZAIDI","NURHAFIZAH BINTI DAUD","NURUL AFRINA BINTI NOOR AZMAN","NURZAHRA ALYA NABILAH BINTI MOHD ZAI FUL NIZAN","QHAIRA SAKINAH BINTI ZAMZAM","QRISTINA FERLYN FARISA BINTI MOHD FAIZAL","RAFLI SHAFIQRI BIN MOHD SHAH","SHAH FARIS SYAZWAN BIN SHAH ASHRIL","SYED YUSRI MUZAFFAR BIN SYED NAZRI","UMAR RAZIQ BIN AZRIQ"],
+    "2B": ["AINUL AMMAR ASYRAF BIN ARYADI","ADZAM BIN SAFRI","ALFA FARRISH BIN ABDULLAH","ANIS ARIANA BINTI MOHD FATHLY","FARITH AQASHAH BIN HERZAM","HAZIQAH REYDANIA BINTI HAIREY","INTAN NURUMAIYAH BINTI ASRUL AFFENDDI","JANNATUL HASANAH BINTI ABDULLAH","MAHER ZAIN BIN ISMANGIL","MIQAEL NUH 'ALI BIN YUHANIWAN","MOHAMAD NUR ASRI BIN ABDUL AZIZ","MOHAMAD RAHMAN SAIFULLAH BIN AHMAD SOBRI","MOHAMAD SYAHKIRIN BIN ISA WAZIR","MUHAMAD SHAHRUL FAHMI BIN MOHD SHAHRUL NIZAM","MUHAMMAD AIRELL WAFIY BIN MOHAMMAD KHAIRUL AMRIE","MUHAMMAD AKIF FAHMAN BIN ABDULLAH","MUHAMMAD AMIR ASYRAF BIN EMA RAZALI","MUHAMMAD ANIQ THAQIF BIN SUFIAN","MUHAMMAD HAZIQ JAZLI BIN MOHAMAD ASHARI","MUHAMMAD IMAN BIN MUSTAFA","MUHAMMAD KHAIRI BIN KAMARUDIN","NOR NAJWA QISTINA BINTI NORHIZAM","NUR AIN JANNAH BINTI MOHD SHAFIE","NUR ALYSA ADENIN BINTI INDANG KENAWAN","NUR DINI SAFIRAH BINTI MD YAZID","NUR FARAH NADIAH BINTI ARIFFIN","NUR LUFFIA BINTI MOHD SYAHRIN","NURSURI BALQIS BINTI BASRI","QISTINA QALESYA BINTI MOHD AMIN","SHAH RAFFIZ IZLAN BIN ZAIRUL","SITI NURIN DAMIA BINTI MOHD NOOR AMIN"],
+    "2C": ["AHMAD DHANI BIN IRWAN","AIDIL BIN ABDULLAH","AZREENA SRUTHI BALQIS BINTI BURHANUDDIN","DAYANA SAFIYYAH BINTI ZULFAKAR","ERMA NORMIMI BINTI HAMZAH","FATIMAH MUBASHIRA BINTI MUSA","INTAN SASI KINASIH","MIA ZAHRA ZULAIKHA BINTI MISNAN","MOHAMAD AIRI BIN MOHD YASSIN","MOHAMAD DANISH WAFIQ BIN MOHD FADLY","MUHAMMAD ADHA BIN NORRIZAN","MUHAMMAD AMIR IRFAN BIN MOHAMMAD REZUAN","MUHAMMAD ANIQ NAUFAL BIN ZULKARNAIN","MUHAMMAD ARIQNAZHIF BIN ADZALUDDIN","MUHAMMAD ARSHAD BIN ADENAN","MUHAMMAD FAIRUL HAKIMI BIN MUHD FAIRUL AHKIR","MUHAMMAD FAIZ NAIM BIN HAZMAN","MUHAMMAD HAIKAL HADI BIN SAMSUL NIZAM","MUHAMMAD ISKANDAR ZULKARNAIN BIN MHD AJMA'IN","MUHAMMAD RASYDAN FIKRI BIN ROSLAN","MUHAMMAD ZULFAKAR BIN YUSZAMRI","NORLAILA SYARIFAH BINTI SYAHRUL NIZAM","NUR ALEESHA BINTI ABDUL LATHEEF","NUR ALYA BATRIESHA BINTI BAKRI","NUR AMANDA BATRISHA BINTI ABDULLAH","NUR EMYLIA BINTI MOHD ANUAR","NUR THAQIFAH MUNIRAH BINTI MOHD FAUZI","NURAISH RIZKI BINTI MOHAMMAD AINUL RASHYED","NURUL IZZAH BINTI FAUZI","QASEH SUMAYYAH BINTI MOHD ISMAKAZAFUDDIN","SAFFA ZAHIRAH BINTI ABDILLAH","ZAYYAD MIRZA BIN AZARI"],
+    "2D": ["AMAL ZULFAH BINTI MOHD NAZIR","AQILAH BINTI MOHD AZHAR","HARITH MIKAIL BIN MUHAMAD NOOR SYAIFUL","MOHAMAD AMIN RAYYAN BIN ASHAARI","MOHAMAD NABIL NAFEE BIN ABDUL SAMAD","MOHAMAD SYAZMIEL EMRIZ BIN MOHAMMAD SYAZWAN","MUHAMMAD ADIFF HAQIMI BIN EDDY IRMANTO","MUHAMMAD AFIQ BIN SELAMAT","MUHAMMAD ARYSAD IZZUDDIN BIN SANUSI","MUHAMMAD DARIS ARSYAD BIN RAMLEE","MUHAMMAD FAHMI BIN YAAKUB","MUHAMMAD FARIZ AIMAN BIN MUHAMMAD FIRDAUS","MUHAMMAD FAZREEL BIN ABDULLAH","MUHAMMAD HAFIZ IRSYAD BIN MUHAMAD JAILANI","MUHAMMAD HARIZ RAZIQ BIN HARIZOON","MUHAMMAD IKHWAN BIN MAMMI","MUHAMMAD NUR QAYYUM BIN MOHD KAMIS","MUHAMMAD ZAHIROL AMSYAR BIN ABDULLAH","NABILAH HUWAIDAH BINTI ABDULLAH","NATASHA BINTI OSMAN","NOR AMIRA NATASHA BINTI ABDUL KARIM","NUR AQILAH ZULAKHMA BINTI ZULAFRIZAL","NUR DHIA SHAIDATUL QALEESHA SAFARI BINTI ABDULLAH","NUR FARHANA BINTI MAT KARIYEU","NUR NAZURAH AKMA BINTI ALIM SHAH","NURUL EMEIRA LIYANA BINTI ABDUL 'ALIM","PUTRI NUR ATHALIA BINTI SHALIHODDIN","QAISARA BATRISYIA AMANI NAZMI BINTI MOHD NAZRIE","QURRATU AINA BINTI ABU BAKAR","SITI AQIDAH BINTI HISHAM","SITI RAUDHATUL NAJAH BINTI MOHAMAD YUSERY","SITI ZULAIKHA BINTI AHMAD SAYUTI"],
+    "2E": ["AHMAD DANISH ZAIDI BIN MOHAMAD ZAILI","AHMAD DHAFI BIN IRWAN","AMMAR SYUKRI BIN SULAIMAN","AMNIRIANA IRMAWANI BINTI SAROZI","ASMA'","IZZ SYAFIQ IMAN BIN AHMAD HASIF IDZWAN","JANISKA A/P NATHAN","KRITISHA A/P KALAI SELVAN","MIFTAHOL JANNAH BINTI MOHAMAD ALIM","MOHAMAD HAZRIQ HAQIM BIN DANG SATRIA","MOHAMMAD AQASHAH BIN OMAR","MUHAMMAD ALIF ASHRAF BIN MUHARAM","MUHAMMAD ANDI PUTRA BIN ANDI BUDIMAN","MUHAMMAD IRFAN SYAKIRIN BIN ABDULLAH","MUHAMMAD JIBREEL AL-HAFIZ BIN MUHAMMAD HARITH","MUHAMMAD RAYYAN RAYQHAL BIN MOHAMMAD NIAZ","MUHAMMAD SAIFUL SHAHRUL BIN MAZLAN SHAHRIL","MUHAMMAD SHAMMEL BIN ABDULLAH","MUHAMMAD ZAIM FAUZAN BIN MOHD FAUZI","MUZHAFARSHAH AZHAR BIN MOHD SHAHFUAN","NOR MASUHANA BINTI OMAR","NORAMEELIYA NATASHA BINTI ABDUL RAZAK","NUR AIRA ARISSA BINTI MUSLIM","NUR FATHIYAH AMALINA BINTI RAMLI","NUR LIYANA QHALESYA BINTI MUSTAFA","NUR QASIH UMAIRAH BINTI JASNI","NUR QASRINA QAISARA BINTI MOHD YUSRY","NUR SHAHILA DAMIA BINTI SURIAILHAM","NURHAZWANI HUDA BINTI MOHD HAFIS","NURIN DARWISHA BINTI ABDULLAH","NURUL FATIHAH BINTI MOHD SHUKUR","NURUL NURFATIHAH BINTI ABDULLAH","PUTRA AL AMIR BIN ABDUL KADER","TUAN HAZIQ AIQA BIN TUAN ISKANDAR"],
+    "2F": ["AFKAR SYAHMI BIN ADLI","AHMAD ADAM BIN DARASITH","AINUL RAUDAH IRDINA BINTI MOHD SAIFUL BAHARI","ARIQ FAYRUZ BIN KHAIRUL ARIFFIN","BILAL BIN ADAM","MOHAMAD ADAM BIN NORAZHAR","MOHAMAD HAFIZAN HARIET BIN ABDULLAH","MOHAMAD HARITH IRFAN BIN MOHD FAIZUL AZROY","MUHAMMAD ADAM AFIQ BIN IKHSAN","MUHAMMAD ADDIB BIN NOR AZMI","MUHAMMAD AYMAN HAKIMI BIN MOHD ARFAH","MUHAMMAD DANISH IMAN BIN MOHD YASID","MUHAMMAD FAKHRUDDIN BIN JASNEY","MUHAMMAD FARREL QAIZER BIN ABDUL RAHIM","MUHAMMAD HAZRIQ NAQIUDIN BIN MOHD HAZIQ","MUHAMMAD RAUF FADZLAN BIN MOHD SAIFUL SHAH","MUHAMMAD SYAFIE BIN KODRI","NAFISATUL MISLIHA BINTI MOHD FAIZAL","NOR SHAH FIKA","NUR AFIFAH NASUHA BINTI MOHAMAD NAZALI","NUR IMAN QAISARA BINTI MUHAMMAD HAFIZ","NUR INSYEERAH BINTI IMRAN","NUR IZZATUL FITRIYAH BINTI ABDUL RAHMAN","NUR NAZURAH BINTI ABD.RAHMAN","NUR SYAKIRAH BINTI SALEH","NURERENA AMANDA BINTI MASRUDI","NURFARISHAH ALYA BINTI MOHAMAD FADLIESAM","NURUL AISYAH BINTI KHIRUDIN","NURUL AMIRAH BINTI NASRON","NURUL HUSNA BINTI NOORIZRAQ","SAIDATUL NAFISAH BINTI MOHD NOR AMINUDDIN","SITI NURAQILLAH BINTI ABDULLAH"],
+    "2G": ["IZARA QALEESYA BINTI MOHD HASRIQ","KASSIM BIN ABDULLAH","MOHAMAD AIMAN FIRDAUS BIN KASSIM","MOHAMAD ALIF IRFAN BIN BAKHTIAR","MOHAMED RAFIEQ HAFIEZAL BIN ABDULLAH","MUHAMMAD AMMAR IKRAM BIN MOHD ZAMIL","MUHAMMAD ARIEL AL FARIZI BIN IMRAN","MUHAMMAD FARIS DANIAL BIN MOHD ROSZAIMI","MUHAMMAD FIKRI BIN ABDUL AZIZ","MUHAMMAD KHAIRUL BIN OTHMAN","MUHAMMAD NAZRIL ILHAM BIN ABDUR RASHID","MUHAMMAD PUTRA SULAIMAN BIN MD NOR EFENDY","MUHAMMAD SYAWAL BIN RAZALI","NOR HAFIZAH BINTI HARUN","NOR ZANITA BINTI ABDULLAH","NUHA BINTI AHMAD FARID","NUR ADIRA FATIHAH BINTI MD SHAFIEE","NUR AINA NAZIRA BINTI MOHAMAD AKMAL HAKIM MUNGGAN","NUR DAMIA DARWISYAH BINTI NOR AZMAN","NUR DHEA SUMAYYAH BINTI ABDUL RAMAN","NUR HAZRIANA DANIA BINTI SAHARUL","NUR NADHILAH BINTI ANTIK YUSFIZAL","NUR RAIHANA BINTI MUHAMMAD RASSUL","NUR SAIDATUL HUSNA BINTI MOHD AZWAN","PUTERA MUHAMMAD SZASRUL EMAN BIN MOHD ZAHIR","PUTERI NUR SYAMIMI BINTI HIRMAN","SITI NUR ADIEBA","SITI NUR HIDAYATI BINTI SULAIMAN","WAN EMAN FARISAH BINTI WAN MOHD HAFIFI"],
+    "2H": ["ADIPUTRA BIN ADENAN","ARMAN BIN JONNY","CHE WAN ADAM YAMANI BIN CHE WAN DZULQARNAIN","DANISH ALI BIN FARVEEN","IRHAM NUR HAFIY BIN IRMAN","JOANNA BINTI JOHARI","MOHAMAD ASHRAF BIN MOHAMAD SALIH","MOHAMAD NUR IKHWAN BIN MOHAMAD HAIRONIZAM","MUHAMMAD ADAM HAIQAL BIN ATAM","MUHAMMAD AMIRUL FAZLI BIN AZMI","MUHAMMAD AQIL ZAKWAN BIN MISNAN","MUHAMMAD FAKHRUDDIN BIN RAHMAT FAIZAL","MUHAMMAD HAFIZ FAUZAN BIN MOHD ZAMRI","MUHAMMAD MUHAYMIN KHABIR BIN KHAIRUL SHAH","MUHAMMAD RIDZUAN BIN JUMIAN","MUHAMMAD SYAHMIRUL BIN ABDUL AZIZ","MUHAMMAD TAUFIQ BIN FARIZAN","MUHAMMAD YASIN BIN WAN ISMAIL","MUHAMMAD ZIKRY QHUZAIRY BIN ROHAIZAN","MUHAMMAD ZUL ISKANDAR BIN MOHD FIRDAUS","NOOR KASIH BINTI MISDIN","NOR AINA BALQIS BINTI ABDUL KARIM","NUR ALYA NAJWA BINTI SUHAIMI","NUR FARISYA DAMIA BINTI ZAINAL","NUR HASYIKIN"],
+    "2M": ["ANAA ZINNIRAH BINTI MUHAMMAD HAFIZ","BADIUZZAMAN BIN IKHWAN","DAMIA QAISARA BINTI RAZALI","HASEEF ALHAQQ BIN MUHAMMAD 'ARIFFIN","HAZIQ HAIKAL BIN MOHD FAHRUL ROZI DOMORA","MIA ASYIQIN BINTI ABDUL RAZAK","MOHAMAD AISY HAFIZI BIN ABDULLAH","MOHAMAD AQIEM MIKHAIL BIN MOHD KHAIRUDDIN","MUHAMMAD ALIF FIRDAUS BIN JAMIL","MUHAMMAD ARIF BIN MOHD IDROS","MUHAMMAD ARYAN ZAFRIEL BIN AZREE","MUHAMMAD FAIZ FIQRI BIN ABDUL MUQTADIR","MUHAMMAD FIRAS IBRAHIM BIN FAZREN","MUHAMMAD HAFIY HAMIZAN BIN MOHD YAHYA","MUHAMMAD IKHWAN FARHAN BIN MD HAN","MUHAMMAD IMAN BIN ABDULLAH","MUHAMMAD IYADH RIFAIE BIN HAIRUL","MUHAMMAD LUBAID HAMMIZAN BIN MUHAMMAD ABDUL HADI","NOR SAFINA BINTI IRWAN","NUR ADNI DELISYA BINTI MATRUFI","NUR AISYAH SOFIA BINTI SUHAIDI","NUR ANISAIDAH BINTI MOHD RIZWAN","NUR ANNISA' BINTI MOHD RASID","NUR HANNAH RYANA BINTI MOHD TAUFIK","NUR HIDAYAH BINTI MOHD BADRI","NUR SYAKILLA AMANY BINTI MOHD BAKRI","NUR TASNEEM BINTI MOHD BAKTHIAR","NURAISYAH ADAWIYAH BINTI ABDUL RAHMAN","NURIN HUSNA BINTI ZAINUDDIN","NURQISTINA BALQISH BINTI AB RAHMAN","SAMER ESMETH BIN SAIFUL BAHARI","WAN AQIL HAKIMI BIN WAN HAFIZI","ZAKIAH BINTI AHMAD SUPARMAN"],
+    "4A": ["AIRA BINTI ABDUL RAZAK","AISYAH HUMAIRA IZZATI BINTI MHD AJMA'IN","AISYAH YAHUMAIRA BINTI MOHAMMAD HIFFNY","ALYA BATRISYIA BINTI MUHAMAD YUSAIRRI","ALYAA MAISARAH BINTI AHAMAD AL KABIR","ASSYIFA INSYIRAH BINTI ZAMZAM","HAMIZAH MAISARAH BINTI HAFISMAN","MOHAMAD MUAZZAM BIN SAIFUL AZHAR","MOHAMED RAIS AMMAR BIN MOHAMED SAIFUL","MUHAMMAD ADAM ISKANDAR BIN YAZED","MUHAMMAD AQIL BIN MOHD NASIR","MUHAMMAD DANISH AFHAM BIN AMINORDIN","MUHAMMAD HASIF HANAFI BIN MOHD SA'RONI","MUHAMMAD NAUFAL AFIQ BIN JASLI","MUHAMMAD RAZEEN IRFAN BIN MOHD FEZRY","NAZRINNA BINTI NYZAM","NOOR FARINA FERLYN ALISAH BINTI ABDULLAH","NORALYSHA HUDA BINTI EMA RAZALI","NORDIANA DAFINA BINTI MOHD FAIS","NUR ARISYA SOFIYA BINTI ADZALUDDIN","NUR FATIN BATRISYA BINTI AZMI","NUR HANNAH DAMIA BINTI MOHD TAUFIK","NUR IMAN FAIZ BIN ABDULLAH","NUR QYREEN BATRISYA BINTI MOHD FADLY","NURHIDAYU BINTI MOHD ANUAR","NURUL AINA ATHIRAH BINTI ZOLCEFFLI","NURUL QUMAYRAH BINTI ALI","RAIKKONEN PUTRA MIKHAEL BIN NORSARULNIZAM","SHAIKH MOHAMAD AIMAN BIN SHAIKH MOHD ALWI","SYARIFAH NUR INSYIRAH BINTI SYED ABDUL HALIM","VARUNA A/P LOGANATHAN"],
+    "4B": ["ALIESYA ERINA BINTI AZLAN","AMIERA NATASHA BINTI ABDULLAH","FAKHRUL NAQIB BIN HAMADI","HAZIQ IQBAL BIN HASAN","KIRTANA A/P KALAI SELVAN","MASSYAKIRAAMIRA BINTI MASHADI","MOHAMAD HASIB BIN ROSLI","MOHAMAD HASRUL NIZAM BIN MOHAMAD HAFIZ","MOHAMAD ISKANDAR ZULKARNAIN BIN ABDUR RASHID","MOHAMAD KHAIRUL SHAFIEE BIN ABDULLAH","MOHAMAD MIZRUL HISAM BIN MISDAR","MUHAMMAD ADAM BIN ABD GHAZALI","MUHAMMAD ADAM WAFIQ BIN NORHABIDIN","MUHAMMAD ADAM ZUHAIRI BIN MD HAMID","MUHAMMAD AFIQ HAIKAL BIN ASHAIR","MUHAMMAD AKKIL MUHAIMIN BIN MOHD FAIDZAL","MUHAMMAD DANISH BIN YUSOF","MUHAMMAD FIKRI SALAHUDDIN BIN MOHD SALLEH","MUHAMMAD IHTISYAM BIN IBRAHIM","MUHAMMAD IMAN DARWISH BIN ZULKIFLI","MUHAMMAD SHAHRUL RAMADHAN BIN SAMATEA","MUHAMMAD ZAQUAN BIN JAMIL","NAZRYN BINTI NYZAM","NORSYAHIRAH BINTI ISA WAZIR","NUR AMELIA BALQISHAH BINTI MAZHAN","NUR IFFAH SHAFIMI BINTI MOHD SAZRIN REDZA","NUR SHAFIKHA RAUEZAH BINTI ABDULLAH","NUR SITI FATIMAH BINTI YUSUF","NURAMINAH ZAHIRAH BINTI MOHD HAIRI","NURFASHA AQILAH SYAHIRAH BINTI ABDULLAH","NURUL FARISYA BINTI OMAR","SITI NORHAFIZAH BINTI ZULKEFLI","SYAHMIRUL BIN SHAFIE","THANUSKA A/P KESAVAN","UMI NUR ZASYAH BINTI ABIDIN","WAN HUMAIRA BINTI WAN HANAFI","ZASKIA RAMADANI ISNI BINTI SYUEB"],
+    "4C": ["ADAM MUDZAQIR BIN ABDULLAH","AFIFF FAUZAN BIN KHAIRUL ARIFFIN","AKMAL RIFQI AIMAN BIN MOHD HAIREEL","DANIAL HANNAN BIN AB HAPID","GHAZLAN BASRI BIN GHAZALI","HANIE SALSABIELA BINTI AHMAD POZI","IMAN HARITH BIN BAHTIAR","IRIS BATRISYIA BINTI AZHARAR","MARSHA BATRISHA BINTI MOHD FITERIEE","MOHAMAD DANIEL FADHULLAH BIN MOHD RAMLI","MOHAMAD FAHMY AIMAN BIN MD NORAZMAN","MOHAMAD RAYYAN HAFIZI BIN MOHAMAD RAFFI","MOHAMAD SINAN BIN ABD HAMID","MUAZ BIN ROZANI","MUHAMMAD AARON ZIDANE BIN AZREE","MUHAMMAD AQIL AISY BIN SAMSURI","MUHAMMAD HARIZ ZAQWAN BIN MOHAMMAD HAFEZ","MUHAMMAD HARRIS IRFAN BIN MOHD AIZULAZRIN","MUHAMMAD IMADUDDIN BIN YUSMAWI","MUHAMMAD RAYYAN AL FARD BIN JA'AFAR","NOR ASYIKIN BINTI FHADLI ANSYARI","NUR AFZA DANIA BINTI MUHAMMAD YAZID","NUR ARIFAH BALQIS BINTI SYED ALI","NUR AZIRA BINTI ASYARI","NUR ISMA BATRISYIA BINTI TUAH ISMAIL","NUR SHAFFARREESSA BINTI MOHAMAD KARIM","NURALEESYA AISYAH BINTI ZAIDI","NURSHAZIA BALQIS BINTI MUHAMMAD HAFIZ","NURUL SYUHADAH BINTI IKHSAN","PUTERI DAYANA NORHISHAM BINTI ABDUL FATTAH","PUTERI NADIAH NUR DIYANAH BINTI JAMALUDIN","PUTRA AL AFIQ BIN ABDUL KADER","PUTRI ROS BATRISYIA BINTI MD ZAKI","QAILESYA IMAN BINTI NORAZMAN","SITI NORAINI BINTI MOHD SEFIEE","SITI NURZARA SOFIA BINTI ABDUL RAHMAN"],
+    "4D": ["AINUN UMAIRAH BALQIS BINTI ABU BAKAR","BAZLY SYAHMI BIN MD HANAFI","MAIRAH BINTI SHAMSUDIN","MARSYA KARMILA BINTI ASMADI","MOHAMAD ALIFF ARSHAD BIN ISMA ALIF","MOHAMAD DANISH RAMADHAN BIN MOHD HAIRI","MOHAMAD HAFIY AIRYL BIN MOHAMAD SALEH","MOHAMAD IMAN BIN SUHAIMI","MOHAMAD KHAIRUL IZWAN BIN SUBAIRI","MOHAMAD ZIKRY FAHRIS BIN ZULKAFLI","MUHAMMAD AFEEQ BIN ABDUL LATHEEF","MUHAMMAD AKMAL ALIFF BIN ALI","MUHAMMAD AMMAR UWAIS BIN SUHAIRUL","MUHAMMAD AMSYAR DANISH BIN MOHD AZRUL","MUHAMMAD IRFAN BIN MUSTAFA","MUHAMMAD SYAHIR DARWISY BIN MOHD SYAKIRIN","NAJAH ZAHIRAH BINTI MUHAMMAD HARITH","NOORHASLINDA BINTI ZAHARI","NOR BALQISYA UMAIRAH BINTI MOHD NOOR","NOR BALYANI BINTI LOKMAN HAKIM","NOR HAYATI BINTI TAHIR","NORLAILA SYAKIRAH BINTI SYAHRUL NIZAM","NUR ALYA ADENIN BINTI INDANG KENAWAN","NUR DANIA QISTINA BINTI MOHD FAIZAL","NUR FARHANA BINTI ABDULLAH","NUR FARISHA AFIQAH BINTI RAHIM","NUR HAFINA BINTI MUSTAFA","NUR KHAIRUNNISA DAYANA BINTI KHAIRUL IDZHAR","NUR QASEH MAISARA BINTI MAZLAN","NURDINI MARSYA BINTI SHARUDDIN","NURUL ASYIKIN BINTI AZMAN","NURUL BALQISYA BINTI MAZLAN","NURUL FADZWA HANA BINTI MOHD FADZIL","NURUL QISYA AYUMI BINTI MASHERYADI","SHARIFAH SHAFIYAH BINTI SYED BAKAR","SITI NURQASEH BINTI ABDULLAH","ZAINUL ARIFFIN BIN ISMAIL"],
+    "4E": ["ARMAN BIN JONNY","CHE WAN ADAM YAMANI BIN CHE WAN DZULQARNAIN","DAMIA QALISYA ZAHRAH BINTI MOHD FAISAL","FATIHAH UMAIRAH BINTI HERZAM","KHAIRUL IQMAL BIN KASIM","MOHAMAD AIMAN BIN MOHD ALI","MUHAMMAD ABDUL RAHIM BIN RADZHAR","MUHAMMAD ADAM BIN SHAHLAN","MUHAMMAD FARIDZUAN BIN RAZALI","MUHAMMAD HAKIM BIN ABDUL RASHID","MUHAMMAD HAKIMI BIN SAIFUL IZWAN","MUHAMMAD HAQIMIE BIN MOHD RIZAL","MUHAMMAD IZWAR ARFANY BIN MD ISHAK","MUHAMMAD RAZIQ KHILFI BIN MOHD HAZIQ","MUHAMMAD SYAHFRIZAN BIN ZUL AZLAN","MUHAMMAD TAUFIQ BIN FARIZAN","MUHAMMAD ZIAULHAQ BIN ABD HAFIZ","NOOR HASINAH HANI BINTI MOHD YAHYA","NOR AINA BALQIS BINTI ABDUL KARIM","NUR AMALINA BINTI NOR RAZALI","NUR IMAN AL HAFIZ BIN ISMAIL","NUR SABRINA BALQIS BINTI ABDULLAH","NUR SYUHADA BINTI SULAIMAN","NURFATIN NABIHAH BINTI ISMAIL","PIRYA THARSHINI A/P MURUGAN","PUTRI NOR SYAHIRAH BINTI ABDULLAH","REZWANIE BINTI ROSLI","SHAH ADIPUTRA BIN SUHAIBI","SITI HAWA BINTI AHMAD YUSOFF","SYED SUKHRAN BIN SYED ABDULLAH","UZAIR UDAY GHANI BIN BURHANUDDIN"],
+    "4F": ["ADIPUTRA BIN ADENAN","DANISH ALI BIN FARVEEN","MOHAMAD ASHRAF BIN MOHAMAD SALIH","MOHAMAD FARISSYAM BIN MOHAMAD","MOHAMAD FIRDAUS SHAFIE BIN ABDUL QAYYUM","MOHAMAD NUR IKHWAN BIN MOHAMAD HAIRONIZAM","MOHAMAD ZULHAKIMI BIN AZLAN","MUHAMAD IQMAL HAMIZAN BIN MUHAMAD HAMDAN","MUHAMMAD ADAM HAIQAL BIN ATAM","MUHAMMAD ADRIAN DANISH BIN MOHD NAZRI","MUHAMMAD AMIRUL FAZLI BIN AZMI","MUHAMMAD FAKHRUDDIN BIN RAHMAT FAIZAL","MUHAMMAD FIRDAUS SHAH BIN SAHARUDIN","MUHAMMAD HAFIZ FAUZAN BIN MOHD ZAMRI","MUHAMMAD RIDZUAN BIN JUMIAN","MUHAMMAD SHAH AIDIL BIN ABDULLAH","MUHAMMAD SYAHMI BIN SUMANI","MUHAMMAD SYAZLAN BIN SUHAIMIEE","MUHAMMAD YASIN BIN WAN ISMAIL","MUHAMMAD ZIKRY QHUZAIRY BIN ROHAIZAN","MUSZAPHAR ADNAN BIN ABDULLAH","NOOR KASIH BINTI MISDIN","NUR ALYA NAJWA BINTI SUHAIMI","NUR HILLMIYAH AFIFAH BINTI JAMIL","NUR IZZATI DAMIA BINTI MOHD PAIZAL","NUR SYAQINAH BINTI RISYANTO","NUR SYIFA NAJWA BINTI SAHARUDDIN","NURUL SYAKINAH RABIATUL ADAWIYAH BINTI ZAINUDIN","NURUL ZAFIRAH BINTI MISREN","QURRATU AIN BINTI AZAM","SITI FATIMAHTUL SHUHARA BINTI MOIDEEN","SITI MAISARA BINTI SALLEH","SITI NOOR FAIZAH BINTI ROSHAM","WAN HARIS DANIEL BIN WAN MOHD HAFIFI"],
+    "4G": ["ABIL HASSAN SAZULI BIN MASZAMAN","EMEER RIZQI BIN MUSA","IQMAL FIRAS BIN ABDULLAH","IRHAM NUR HAFIY BIN IRMAN","MIZA EZZATY BINTI MAZPPAR","MOHAMAD ADAM BIN MOHD AZRI","MOHAMAD AMIRUL ALIFF BIN MOHD. YAKUB","MOHAMAD AMIRUL IZMA BIN ABDULLAH","MOHAMAD KHAIRUL NIZAM BIN NORHAFIZAN","MUHAMMAD AIDIL QAYYUM BIN JOHAN","MUHAMMAD ANNAS AIDIL HAFIZI BIN MOHD LIK RIDZUAN","MUHAMMAD AQIL ZAKWAN BIN MISNAN","MUHAMMAD BAZLI BIN KAPRAWI","MUHAMMAD HAZRIQ ZAKQWAN BIN AZLAN","MUHAMMAD IQBAL FIRDAUS BIN N IMAM","MUHAMMAD KHAIRIL BIN ABDULLAH","MUHAMMAD NORIRFAN BIN ABDULLAH","MUHAMMAD SAHKIL BIN ABDUL LATIFF","MUHAMMAD SHAFIQ ISKANDAR BIN ABDULLAH","NORRISANORWANI BINTI MOHD KHAIRUL RIZA","NUR AQILAH ZULAIKHA BINTI ZULAFRIZAL","NUR CHEMPAKA SOFEA BINTI ANIZL","NUR HASYIKIN","NUR LIYANA ALISHA BINTI YUSMAN","NURUL ANISA IZZATI BINTI BAKHTIAR","NURUL AZMEERA HARLINAWATI BINTI MOHD AZHAR","NURUL HAMIZAH BINTI ZAIMI","RAJA HAIRUL IMAN BIN RAJA MD HAREL","SHAH RAMADHAN BIN A HALIM SAH","SHAH REEZA FIQRI BIN JALALUDIN","SIRIN BINTI HALIM","SITI FELISA","ZHAREFF DANIEL BIN AZMI"],
+    "4H": ["ADDY ANIZAM BIN AMRAN","AINUL BADRI BIN MUHAMAD JAILANI","INTAN NUR QASEH BINTI NARZAWADI","JOANNA BINTI JOHARI","LUQMANNUL HAQIM BIN ABDULLAH","MOHAMAD AZAM BIN ZULKEFLY","MOHAMAD BIN ABDULLAH","MOHAMAD DANISH BIN NOR AZMAN","MUHAMMAD AMIR IZZUDDIN BIN ISKANDAR","MUHAMMAD AMMAR HARITH BIN MASRUDI","MUHAMMAD DANISH DANIAL BIN MOHD ROSZAIMI","MUHAMMAD DANISH HAQIMI BIN AZMI","MUHAMMAD FAKRUL ZIKRI BIN ABDULLAH","MUHAMMAD HANAFI BIN SULAIMAN","MUHAMMAD HIDAYAT BIN ABDULLAH","MUHAMMAD MUZAFAR BIN MD NOR EFENDY","MUHAMMAD QAYYUM IMAN BIN JEFRI RIZAL","MUSSIFAH BINTI ABDULLAH","NOORMAIZATUL ASHIRA BINTI AHMAD","NORERINA AMALIN BINTI MOHD YASID","NORLI ALIASYA BINTI ALIAS","NUR AKMALINA BINTI NASORUDDIN","NUR AQILAH NAJWA BINTI MOHAMAD NAZALI","NUR FAZERA HANA BINTI MOHD RAZALI","NURUL ATHIRA BINTI NOR AZMI","PUTERI DHIA AMANI BINTI MOHD HANAFIE","SHARIF HIDAYATULLAH BIN HAMIDI","SHARIFAH NATASHA BINTI SYED MOHSIN","ZAFRIL HANAFI BIN ABDUL GHAFAR"],
+    "5E": ["AHMAD DANISH ZAFRAN BIN MOHD HAFIZUL AMRU","AHMAD DARWIS BIN ABDULLAH","AZIZATUL SYAFIRA BINTI MOHD ARFAH","MOHAMAD DANISH AQIF BIN RAMLAN","MOHAMAD KHAIRUL NIZAM BIN FARID","MOHAMAD WAFFIE ZIKRI BIN ABDULLAH","MUHAMMAD ALIF SYAFIE BIN IDRIS","MUHAMMAD ALIFF HAIQAL BIN ZAILAN","MUHAMMAD AMIR AMSYAR BIN ISKANDAR","MUHAMMAD AQEEF BIN ZAIDI","MUHAMMAD FARHAN AIMAN BIN ZAIDI","MUHAMMAD FIRDAUS BIN MAMMI","MUHAMMAD HELMI BIN MOHD SALLEH","MUHAMMAD MEKAIL ZAKI BIN RAHMAT","MUHAMMAD NABIL BIN ABDULLAH","MUHAMMAD RAZIQ HAIQAL BIN ABDULLAH","MUHAMMAD SYAHMIE BIN ZAKI","MUHAMMAD ZIKRI BIN SARIFIN","NUR ALISSYA FAZIRA BINTI MOHD ZAMRI","NUR DAFINAH DAMIA BINTI MOHD YUSRY","NUR FARRAH QISTINA BINTI MOHAMAD","NUR ZULAIKHA BINTI MOHD ALWI","NURHAZIMAH BINTI ZAINI","PUTRI NAURA IRISNAJWA BINTI MOHD AMIN","RAUDAHTUL JANNAH BINTI ISMAIL","SHURIYA A/L CHANDRAN","SITI AISAH BINTI MOHD RIZWAN","SITI NADIAH BINTI AZMAN","SITI NUR FITRI ATIQAH BINTI ABDULLAH","SITI NUR NABILA","SITI SAFIYAH AMIRAH BINTI MOHD SAIFUL SHAH","SYED MAHMUD BIN SYED MOHSIN","WAN NUR AMIERA QALISHA BINTI WAN ZAIRUL ANUAR","ZULKARNAIN BIN YUSZAMRI"],
+    "5F": ["ABDUL NAJID BIN MUSA","EIMAN RIFQI BIN MUSA","MUHAMMAD AQIFF FIRDAUS BIN YUSNI","MUHAMMAD FARHAN HAFIZI BIN ABDULLAH","MUHAMMAD FARISH BIN ABDULLAH","MUHAMMAD FAUZI FITRI BIN REDUAN","MUHAMMAD FIRDAUS BIN ABDULLAH","MUHAMMAD HAIKAL HAKIMI BIN MOHD AIZULAZRIN","MUHAMMAD NUR MIKAIL BIN BOBAY @ MUSTAFFA","NOR AZIZAH BINTI AZMAN","NUR IRA MUJAHIDAH BINTI IBRAHIM","NUR NAJWA ASYILAH BINTI MOHAMMAD NIZAM","NUR QALESSYA BINTI MD SAIFUL","NURFADILAH BINTI ABDULLAH","NURSYAFIRA BALQIS BINTI DARMAWAN","NURUL NADIA IDAYU BINTI ABDULLAH","NURUL NAJWA BINTI IHSAN","PUTERI AL JANNAH BINTI SAHARUDIN","RYANNIE BINTI JONNY","SANJEEV KHANNA A/L SURESH","SITI FATIMAH BINTI OMAR","THARANESWARY A/P SURESH"],
+    "5G": ["ALIEF HAMZAH BIN MUSLIM","ALISHA SYAHZERA BINTI ASMAWI","ALYA QAISARA BINTI MUSLIM","AMIRAH ARINAH BINTI AZMAN","DANIA HUMAIRA BINTI FAUZI","FAREEL IKHWAN BIN AYUB","FARIS SYAZWAN BIN MOHD SAIFUL","HUSNA SYAKIRAH BINTI ZAMZAM","INTAN NABILA BINTI AZMI","LIYANA HAZIRAH BINTI DZULKIFLEE","MOHAMAD NUR HAIMAN BIN JAMIL","MUHAMMAD DZAL AIDI BIN MOHD HASIM","MUHAMMAD KHALISH BIN MOHD BAKTHIAR","MUHAMMAD NABIL IRFAN BIN MOHD NASRUL","NUR AIMAN BIN RUMIZAN","NURIN SYAFIQAH BINTI ROMSAH","NURUL AISYA DAMIA BINTI MOHD FASANI","NURUL MUBASHIRAH BINTI ABDUL KARIM"],
+    "5A": ["ALIEF HAMZAH BIN MUSLIM","ALISHA SYAHZERA BINTI ASMAWI","ALYA QAISARA BINTI MUSLIM","AMIRAH ARINAH BINTI AZMAN","DANIA HUMAIRA BINTI FAUZI","FAREEL IKHWAN BIN AYUB","FARIS SYAZWAN BIN MOHD SAIFUL","HUSNA SYAKIRAH BINTI ZAMZAM","INTAN NABILA BINTI AZMI","LIYANA HAZIRAH BINTI DZULKIFLEE","MOHAMAD NUR HAIMAN BIN JAMIL","MUHAMMAD DZAL AIDI BIN MOHD HASIM"],
+    "5B": ["ABDUL HAKIM BIN HOSEN","ADAM ZIKRIEL BIN ISHAK","AMIRUL AMNAN BIN SHAIFUL AZHAR","AMMAR FAIZ BIN ZOLNORIN","AMMAR ZULKARNAIN BIN RASID","AMYLEA AMANDA BINTI AHMAD SABRI","EMI SOFIA NADIRA BINTI YAKUB","HAIRUNNISA QAIRA BINTI MOHD HAZAHAR","IZZAHTUL HAIDAH BINTI SAADON","MAHSURI BINTI ABD GHANI","MARYAM NUR 'AIN BINTI YUHANIWAN","MOHAMAD SHAHRUL AIMAN BIN TUKIMAN","MUHAMMAD AQILL HAYY BIN HASSAN","MUHAMMAD ARIF DANISH BIN MOKHTAR","MUHAMMAD UMAR HAZIQ BIN RAMLI","NUR ADIBAH KHALIESAH BINTI SUHAIDI","NUR DAMIA SAZREENA BINTI MOHD AZREEN","NUR INTAN ATIKHA BINTI HUSSAIN","NUR IRDINA NABIHAH BINTI MOHAMAD REZA","NUR ISMAHANI BINTI SAMIAN","NURFALLIN SOFIEYA BINTI MOHD SARUDIN","NURIN ALYAA BINTI ABDUL LATIF","NURIN NAJIHA BINTI MOHAMAD IDERAK","NURSYAKIRA BALQIS BINTI ABDUL RAZAK","NURUL SHAZERIN BINTI MOHAMMAD ERWAN","PUTERI NUR EZATUL ALIA BINTI MOHD ZAHIR","PUTERI SYAKIRAH NUR GHINA BINTI JAMALUDIN","QAISARA BATRISYIA BINTI SAIFUL NAIM","SITI ANISAH BINTI HISHAM","SOFEAHANIS BINTI RIZAL","SYAHRIZAN BIN SULFAN","ZAKIYAH HANI ABD RAHMAN BINTI ABDULLAH"],
+    "5D": ["AHMAD DANISH ZAFRAN BIN MOHD HAFIZUL AMRU","AHMAD DARWIS BIN ABDULLAH","AZIZATUL SYAFIRA BINTI MOHD ARFAH","MOHAMAD DANISH AQIF BIN RAMLAN","MOHAMAD KHAIRUL NIZAM BIN FARID","MOHAMAD WAFFIE ZIKRI BIN ABDULLAH","MUHAMMAD ALIF SYAFIE BIN IDRIS","MUHAMMAD ALIFF HAIQAL BIN ZAILAN","MUHAMMAD AMIR AMSYAR BIN ISKANDAR","MUHAMMAD AQEEF BIN ZAIDI","MUHAMMAD FARHAN AIMAN BIN ZAIDI","MUHAMMAD FIRDAUS BIN MAMMI","MUHAMMAD HELMI BIN MOHD SALLEH","MUHAMMAD MEKAIL ZAKI BIN RAHMAT","MUHAMMAD NABIL BIN ABDULLAH","MUHAMMAD RAZIQ HAIQAL BIN ABDULLAH","MUHAMMAD SYAHMIE BIN ZAKI","MUHAMMAD ZIKRI BIN SARIFIN","NUR ALISSYA FAZIRA BINTI MOHD ZAMRI","NUR DAFINAH DAMIA BINTI MOHD YUSRY","NUR FARRAH QISTINA BINTI MOHAMAD","NUR ZULAIKHA BINTI MOHD ALWI","NURHAZIMAH BINTI ZAINI","PUTRI NAURA IRISNAJWA BINTI MOHD AMIN","RAUDAHTUL JANNAH BINTI ISMAIL","SHURIYA A/L CHANDRAN","SITI AISAH BINTI MOHD RIZWAN","SITI NADIAH BINTI AZMAN","SITI NUR FITRI ATIQAH BINTI ABDULLAH","SITI NUR NABILA","SITI SAFIYAH AMIRAH BINTI MOHD SAIFUL SHAH","SYED MAHMUD BIN SYED MOHSIN","WAN NUR AMIERA QALISHA BINTI WAN ZAIRUL ANUAR","ZULKARNAIN BIN YUSZAMRI"],
+    "5C": ["ABDUL RAHMAN AUF BIN FAZRI","ADHAM WAFIY BIN AZIZAN","AHMAD BUKHORI YUSRON","ALTAAF UMAR BIN MOHD ZAI FUL NIZAN","ATIQAH NUR QASEH QARERA BINTI ABDULLAH","AYMIE NAFEESSA BINTI MOHD AZRAN","FADHLIN NUR RASYIQAH BINTI FAZREN","HAQQIEY PUTRA BIN ABDULLAH","IRFAN DANIEL BIN ISKANDAR","MAISARAH ADILAH BINTI MOHAMAD MUSTAQIM","MOHAMAD NORIQBAL FAHMI BIN NORHIZAM","MOHAMED FARID BIN ABDULLAH","MUHAMMAD AIMAN SYAHMI BIN ABDUL HALIM","MUHAMMAD ALHA FIZ DENNY BIN MOHD ALWI","MUHAMMAD ARIFF ZIKRI BIN IZUWAN","MUHAMMAD ARSYAD BIN FADEL","MUHAMMAD HAIKAL BIN BUDI OTOMO","MUHAMMAD HAREEZ EMAN BIN MOHD FAUZI","MUHAMMAD ISKANDAR MUDA BIN MOHD YUSOF","MUHAMMAD NURSHAZWAN BIN SAMATEA","NADHIRAH NABILA BINTI MUJEBURAHMAN","NUR AMIRAH MAISARAH BINTI AKIK SUFANDAS","NUR FHATIMATUSZAHRAH BINTI MOHD YASIR","NUR IFFAH LIYANA BINTI BUANG","NUR QASEH BINTI MOHAMAD NOORAN","NUR SYARMIMIE BINTI HAFIZOL","PUTRI AIERIN ALYSSA BINTI MOHAMAD ZAMRI","PUTRI NORASYIKIN BINTI ABDUL RASYID KONG","RADEN IZZ ILHAM BIN NORRADIN","SHAH HARIZ MUZHAFFAR BIN SHAH ASHRIL","SHAH RAZZIF ILHAM BIN ZAIRUL","SITI NURFARESHA BINTI NIK MOHD AZRI"],
+    "5D": ["ADRIAN MUHAMAD DANISH BIN MUHDI","AHMAD DANISH ZAFRAN BIN MOHD HAFIZUL AMRU","AHMAD DHANI BIN ABDULLAH","AIDID SYAFWAN BIN SAIFUL","EMRAN YUSOF BIN AMZAH","MOHAMAD AZIB BIN MOHAMED","MOHAMATHIRUL RIGFAN BIN MOHD KHAIRUL RIZA","MUHAMMAD ADI PUTRA BIN ANIM","MUHAMMAD AMMAR AIMAN BIN NORLIZAM","MUHAMMAD HAFIZ BIN ABDULLAH","MUHAMMAD HASAN BIN RANO","MUHAMMAD SHAHFIQ BIN AZIMI","MUHAMMAD TAUFIQ BIN ABDULLAH","NORSIHMAH BINTI HUSIN","NUR AMINA BINTI SHAM","NUR WAZNAH BINTI IKHWAN","PUTERI QALIESYA MAISARAH BINTI ABDUL RAHMAN","PUTRI NUR ARIRA BINTI ABDUL KAHAR","SAYYIDAH ZAHRA BINTI ABDULLAH","SYAMIERA ANTASYA BINTI ABDULLAH"]
+  };
+
+  // LS Descriptor Mapping
+  const lsDescriptors = {};
+
+  // Unit-to-LS mapping by form (certified Scheme of Work)
+  const form1UnitLS = {
+    "Unit 1: What Do You Like?": ["3.1.1", "3.1.2", "1.1.1", "1.1.2", "2.1.1", "2.1.5", "4.1.1", "4.2.3", "5.1.1"],
+    "Unit 2: Fact or Fiction?": ["3.1.2", "1.1.1", "1.1.2", "2.1.1", "2.4.1", "4.1.1", "5.1.2"],
+    "Unit 3: Wild Weather": ["3.1.1", "3.1.2", "1.1.1", "1.1.2", "2.1.1", "2.4.1", "4.1.1", "4.1.3", "5.3.1"],
+    "Unit 4: Life on Earth": ["3.1.1", "3.1.2", "1.1.1", "1.1.2", "2.1.1", "4.1.1", "5.3.1"],
+    "Unit 5: Let's Experiment": ["3.1.1", "3.1.2", "1.1.1", "1.1.2", "2.1.1", "4.1.2", "4.2.3", "5.3.1"]
+  };
+
+  const form2UnitLS = {
+    "Unit 6: Money": ["3.1.1", "3.1.2", "1.1.2", "2.1.2", "2.3.1", "4.1.2", "4.2.3", "5.1.1"],
+    "Unit 7: Journeys": ["3.1.2", "1.1.2", "2.1.2", "2.3.1", "4.1.2", "4.1.4", "5.1.1"],
+    "Unit 8: Good Luck, Bad Luck": ["3.1.2", "1.1.2", "2.1.2", "2.4.1", "4.1.2", "4.1.4", "5.1.1"],
+    "Unit 9: Take Care": ["3.1.1", "3.1.2", "1.1.2", "2.1.2", "4.1.2", "5.3.1"]
+  };
+
+  const form3UnitLS = {
+    "Unit 1: Family Ties": ["3.1.1", "3.1.2", "1.1.1", "1.1.2", "2.1.5", "2.2.1", "4.2.1", "4.1.5"],
+    "Unit 2: Food, Food, Food!": ["3.1.6", "3.2.1", "1.1.4", "1.1.2", "2.3.1", "2.1.4", "4.1.1", "4.2.3"],
+    "Unit 3: Wonders of Nature": ["3.1.6", "3.1.1", "1.2.1", "1.3.1", "2.1.2", "2.1.4", "4.2.4", "4.2.3"],
+    "Unit 4: Special Relationships": ["3.1.1", "3.1.2", "1.1.3", "1.2.1", "2.1.4", "2.1.3", "4.1.3", "4.1.5"],
+    "Unit 5: A Place to Call Home": ["3.1.1", "3.1.2", "3.1.3", "3.1.4", "1.2.1", "1.3.1", "2.3.1", "2.1.4", "2.1.5", "4.1.5", "4.2.4"],
+    "Unit 6: Ready, Steady, Go!": ["3.1.2", "3.1.3", "3.1.5", "1.1.1", "1.1.4", "1.1.5", "2.1.1", "2.1.4", "2.1.5", "4.2.2"],
+    "Unit 7: Extreme Situations": ["3.1.1", "3.1.4", "3.1.3", "3.1.2", "1.1.4", "1.1.2", "2.1.4", "2.3.1", "2.1.1", "4.2.2", "4.2.3"],
+    "Unit 8: Time to Spare": ["3.1.2", "3.1.3", "3.1.4", "3.1.5", "3.2.1", "1.1.1", "1.1.2", "2.1.3", "2.1.4", "2.1.5", "2.3.1", "4.1.5", "4.2.1", "4.2.2"],
+    "Unit 9: High-Tech World": ["3.1.2", "3.1.4", "3.1.5", "1.1.1", "1.1.6", "1.1.5", "2.1.3", "2.1.4", "2.3.1", "4.1.1", "4.2.2"],
+    "Unit 10: That's Entertainment": ["3.1.1", "3.1.3", "1.1.4", "1.1.2", "2.1.4", "2.1.5", "2.3.1", "4.1.5", "4.2.3", "4.1.2"]
+  };
+
+  const form4UnitLS = {
+    "Unit 1": ["3.1.1", "3.1.3", "3.1.5", "1.1.1", "1.1.2", "1.1.5", "2.1.1", "2.1.3", "2.1.4", "4.1.5", "4.2.2", "4.2.3", "4.2.4", "5.1.1"],
+    "Unit 2": ["3.1.1", "3.1.2", "3.1.6", "1.1.1", "1.1.2", "1.1.5", "2.1.1", "2.1.2", "2.1.4", "2.4.1", "4.1.4", "4.1.5", "4.2.3", "5.1.1"],
+    "Unit 3": ["3.1.2", "3.1.3", "3.1.4", "3.1.6", "1.1.1", "1.1.2", "2.1.1", "2.1.3", "2.1.4", "2.3.1", "4.1.3", "4.2.2", "4.2.3", "4.2.4", "5.1.2"],
+    "Unit 4": ["3.1.2", "3.1.4", "3.1.6", "3.2.1", "1.1.2", "1.1.3", "1.1.5", "2.1.1", "2.1.2", "2.1.4", "2.3.1", "4.1.4", "4.1.5", "5.1.2"],
+    "Unit 5": ["3.1.1", "3.1.2", "3.1.5", "1.1.2", "1.1.5", "1.3.1", "2.1.4", "2.1.5", "2.3.1", "2.4.1", "4.1.1", "4.1.2", "4.1.4", "5.2.1"],
+    "Unit 6": ["3.1.4", "3.1.5", "1.1.2", "1.2.1", "2.1.1", "2.1.3", "2.1.4", "2.4.1", "4.1.3", "4.2.1", "5.2.1"],
+    "Unit 7": ["3.1.1", "3.1.3", "3.1.6", "3.2.1", "1.1.6", "1.3.1", "2.1.1", "2.1.4", "2.2.1", "4.1.3", "4.2.2", "5.2.1"],
+    "Unit 8": ["3.1.2", "3.1.3", "1.1.2", "1.1.3", "1.1.6", "2.1.1", "2.1.4", "2.1.5", "2.4.1", "4.1.4", "4.2.4", "5.3.1"]
+  };
+
+  const form5UnitLS = {
+    "Unit 1: It's Personal": ["3.1.1", "3.1.2", "1.1.3", "2.1.2", "2.2.1", "4.2.3", "4.1.5", "5.1.1"],
+    "Unit 2: Life's Great Mysteries": ["3.1.5", "3.1.2", "1.1.2", "2.3.1", "2.1.2", "4.1.4", "5.1.2"],
+    "Unit 3: The World of Sport": ["3.2.1", "1.1.2", "1.1.3", "2.1.1", "4.2.3", "4.1.3", "5.1.1"],
+    "Unit 4: Shopping Therapy": ["3.1.6", "3.1.1", "1.1.1", "2.1.2", "4.2.3", "4.2.1", "5.1.2"],
+    "Unit 5: The Environment": ["3.2.1", "1.1.1", "1.1.6", "2.3.1", "2.1.2", "4.1.5", "5.2.1"],
+    "Unit 6: Crime": ["3.1.1", "1.1.3", "2.1.1", "4.1.1", "4.1.4", "5.2.1"],
+    "Unit 7: The Media": ["3.1.5", "1.1.1", "2.1.3", "2.2.1", "4.2.4", "5.3.1"],
+    "Unit 8: A Hard Day's Work": ["3.1.2", "3.1.4", "1.1.3", "2.1.4", "2.1.5", "4.1.1", "4.2.1", "5.3.1"],
+    "Unit 9: Getting Away": ["3.1.2", "3.1.4", "1.2.1", "1.1.6", "2.1.4", "4.1.1", "4.1.2", "5.3.1"],
+    "Unit 10: Getting Away (Unit 10)": ["3.2.1", "3.1.3", "1.1.1", "1.1.6", "2.1.3", "2.3.1", "4.1.5", "4.1.3"],
+    "Unit 11: High-Tech World": ["3.1.3", "1.1.1", "1.1.2", "2.4.1", "2.1.5", "4.1.3"],
+    "Unit 12: Happy to Help!": ["3.1.2", "1.3.1", "1.1.2", "2.2.1", "2.4.1", "4.2.4", "4.2.2"]
+  };
+
+  const formUnitLS = {
+    "1": form1UnitLS,
+    "2": form2UnitLS,
+    "3": form3UnitLS,
+    "4": form4UnitLS,
+    "5": form5UnitLS
+  };
+
+  // Class mapping for Forms 3-5 display
+  const classDisplayName = {
+    "3A": "3A", "3B": "3B", "3C": "3C", "3D": "3D", "3E": "3E", "3F": "3F", "3G": "3G", "3M": "3M",
+    "4A": "4A", "4B": "4B", "4C": "4C", "4D": "4D", "4E": "4E", "4F": "4F", "4G": "4G", "4H": "4H",
+    "5A": "5A", "5B": "5B", "5C": "5C", "5D": "5D", "5E": "5E", "5F": "5F", "5G": "5G"
+  };
+
+  function getForm(cls) { return cls.replace(/[^0-9]/g,'').charAt(0); }
+
+  // ===== REFLECTION STATE =====
+  let currentReflectionRow = null;
+  let currentReflectionStudentName = null;
+
+  // ===== STATE =====
+  let currentTeacher = null;
+  let allRecords = [];
+  let currentTab = 'p1';
+  let collectionActiveClass = null;
+  let rekodActiveClass = null;
+
+  // ===== REFLECTION MODAL =====
+  function showReflectionModal(studentName, selectedLS, selectedTP) {
+    if (!selectedTP) { alert('Please select a TP level first'); return; }
+    const skillType = selectedLS.charAt(0);
+    const descriptor = tpDescriptors[skillType] ? tpDescriptors[skillType][selectedTP.replace('TP', '')] : null;
+    if (!descriptor) { alert('Descriptor not found'); return; }
+    
+    const skillName = skillNames[skillType] || 'Unknown Skill';
+    const form = getForm(document.getElementById('class-select').value);
+    const lsInfo = lsDescriptors[selectedLS] || '';
+    
+    const titleEl = document.getElementById('reflection-title');
+    const descEl = document.getElementById('reflection-descriptor');
+    
+    titleEl.textContent = `Professional Insight: ${studentName}`;
+    descEl.innerHTML = `<strong>Skill:</strong> ${skillName} (${selectedLS})<br><strong>TP Level:</strong> ${selectedTP}<br><strong>Form:</strong> ${form}<br><br><strong>Descriptor:</strong> ${descriptor.desc}`;
+    
+    currentReflectionStudentName = studentName;
+    currentReflectionRow = null;
+    
+    const modal = document.getElementById('reflection-modal');
+    modal.classList.remove('hidden');
+  }
+
+  function handleReflectionAction(action) {
+    const modal = document.getElementById('reflection-modal');
+    modal.classList.add('hidden');
+    if (action === 'reflect') {
+      alert('Please update the TP level if your observation has changed.');
+    }
+  }
+
+  // ===== DIRECTORY =====
+  function buildDirectory() {
+    const grid = document.getElementById('teacher-grid');
+    grid.innerHTML = '';
+    Object.entries(teachersConfig).forEach(([name, classes]) => {
+      const card = document.createElement('div');
+      card.className = 'teacher-card bg-white p-5 rounded-xl border border-gray-200 shadow-sm text-center';
+      card.dataset.teacherName = name;
+      card.onclick = () => openWorkspace(name);
+      card.innerHTML = `<div class="text-lg font-bold text-purple-900 mb-2">${name}</div><div class="flex flex-wrap gap-1 justify-center">${classes.map(c=>`<span class="badge">${c}</span>`).join('')}</div>`;
+      grid.appendChild(card);
+    });
+    attachSearchListener();
+  }
+
+  // ===== SEARCH FUNCTIONALITY =====
+  // Store direct class matches for Rekod Transit shortcuts
+  const searchClassMatches = {};
+  
+  function calculateOverallTP(studentName, records) {
+    // Aggregate all skills (1-4) and find the mode
+    const tpValues = [];
+    records.forEach(r => {
+      if (r.student_name === studentName && r.final_tp) {
+        const match = r.final_tp.match(/\d/);
+        if (match) tpValues.push(parseInt(match[0]));
+      }
+    });
+    
+    if (tpValues.length === 0) return '-';
+    
+    const frequencyMap = {};
+    tpValues.forEach(tp => {
+      frequencyMap[tp] = (frequencyMap[tp] || 0) + 1;
+    });
+    
+    const maxFreq = Math.max(...Object.values(frequencyMap));
+    const modes = Object.keys(frequencyMap).filter(tp => frequencyMap[tp] === maxFreq).map(Number);
+    const finalTP = Math.max(...modes);
+    return `TP ${finalTP}`;
+  }
+  
+  function attachSearchListener() {
+    const searchInput = document.getElementById('dashboard-student-search');
+    const helpText = document.getElementById('search-help-text');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim().toLowerCase();
+      const cards = document.querySelectorAll('.teacher-card');
+      
+      if (query === '') {
+        // Reset to default state
+        cards.forEach(card => {
+          card.style.border = '1px solid #e5e7eb';
+          card.style.backgroundColor = 'white';
+          card.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+          card.style.opacity = '1';
+          card.style.cursor = 'pointer';
+          
+          const teacherName = card.dataset.teacherName;
+          card.onclick = () => openWorkspace(teacherName);
+        });
+        Object.keys(searchClassMatches).forEach(key => delete searchClassMatches[key]);
+        helpText.textContent = 'Tip: Type any teacher\'s name to find their class button and navigate to their workspace.';
+      } else {
+        // Build list of matching students with details
+        const matchedStudents = [];
+        const matchingTeachers = new Map();
+        
+        // Search in masterStudentDatabase
+        masterStudentDatabase.forEach(student => {
+          if (student.name.toLowerCase().includes(query)) {
+            matchedStudents.push({
+              name: student.name,
+              classId: student.classId,
+              teacher: Object.keys(teachersConfig).find(t => teachersConfig[t].includes(student.classId))
+            });
+            const teacherName = Object.keys(teachersConfig).find(t => teachersConfig[t].includes(student.classId));
+            if (teacherName) {
+              if (!matchingTeachers.has(teacherName)) {
+                matchingTeachers.set(teacherName, new Set());
+              }
+              matchingTeachers.get(teacherName).add(student.classId);
+            }
+          }
+        });
+        
+        // Search in classStudents object
+        Object.entries(classStudents).forEach(([classId, studentNames]) => {
+          studentNames.forEach(studentName => {
+            if (studentName.toLowerCase().includes(query)) {
+              const teacherName = Object.keys(teachersConfig).find(t => teachersConfig[t].includes(classId));
+              if (teacherName) {
+                matchedStudents.push({
+                  name: studentName,
+                  classId: classId,
+                  teacher: teacherName
+                });
+                if (!matchingTeachers.has(teacherName)) {
+                  matchingTeachers.set(teacherName, new Set());
+                }
+                matchingTeachers.get(teacherName).add(classId);
+              }
+            }
+          });
+        });
+        
+        // Deduplicate matched students
+        const uniqueStudents = [];
+        const seenKeys = new Set();
+        matchedStudents.forEach(student => {
+          const key = `${student.name}|${student.classId}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            uniqueStudents.push(student);
+          }
+        });
+        
+        // Generate help text with student details
+        if (uniqueStudents.length > 0) {
+          const studentLines = uniqueStudents.map(student => {
+            const overallTP = calculateOverallTP(student.name, allRecords);
+            return `• ${student.name} | Class: ${student.classId} (${student.teacher}) | Latest Overall TP: ${overallTP}`;
+          });
+          helpText.innerHTML = `<strong>Matches found:</strong><br>${studentLines.join('<br>')}`;
+        } else {
+          helpText.textContent = 'No students found matching your search.';
+        }
+        
+        // Update all cards with new click handlers and styling
+        cards.forEach(card => {
+          const teacherName = card.dataset.teacherName;
+          if (matchingTeachers.has(teacherName)) {
+            // Highlight with yellow glow
+            card.style.border = '2px solid #fbbf24';
+            card.style.backgroundColor = '#fef3c7';
+            card.style.boxShadow = '0 0 10px rgba(251, 191, 36, 0.5)';
+            card.style.opacity = '1';
+            card.style.cursor = 'pointer';
+            
+            // Store the matched classes
+            const matchedClasses = Array.from(matchingTeachers.get(teacherName));
+            searchClassMatches[teacherName] = matchedClasses[0]; // Use first matched class
+            
+            // Update click handler to go directly to Rekod Transit for the matched class
+            const targetClass = searchClassMatches[teacherName];
+            card.onclick = () => {
+              currentTeacher = teacherName;
+              rekodActiveClass = targetClass;
+              document.getElementById('directory-page').style.display = 'none';
+              document.getElementById('workspace-page').classList.remove('page-hidden');
+              document.getElementById('ws-title').textContent = 'Workspace: ' + teacherName;
+              document.getElementById('ws-classes').textContent = 'Classes: ' + teachersConfig[teacherName].join(', ');
+              showTab('p3'); // Show Rekod Transit tab
+              renderRekod(); // Render with the matched class
+              window.scrollTo(0, 0);
+            };
+          } else {
+            // Fade non-matching cards
+            card.style.border = '1px solid #e5e7eb';
+            card.style.backgroundColor = 'white';
+            card.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+            card.style.opacity = '0.5';
+            card.style.cursor = 'default';
+            
+            // Reset faded cards to do nothing on click
+            card.onclick = null;
+          }
+        });
+      }
+    });
+  }
+
+  function openWorkspace(teacher) {
+    currentTeacher = teacher;
+    document.getElementById('directory-page').style.display = 'none';
+    document.getElementById('workspace-page').classList.remove('page-hidden');
+    document.getElementById('ws-title').textContent = 'Workspace: ' + teacher;
+    document.getElementById('ws-classes').textContent = 'Classes: ' + teachersConfig[teacher].join(', ');
+    initWorkspace();
+    window.scrollTo(0,0);
+  }
+
+  function backToDirectory() {
+    document.getElementById('workspace-page').classList.add('page-hidden');
+    document.getElementById('directory-page').style.display = 'block';
+    currentTeacher = null;
+  }
+
+  // ===== TABS =====
+  function showTab(tab) {
+    currentTab = tab;
+    ['p1','p2','p3','p4','p5'].forEach(t => {
+      document.getElementById('tab-'+t).classList.toggle('page-hidden', t !== tab);
+      document.getElementById('nav-'+t).classList.toggle('tab-active', t === tab);
+    });
+    if (tab === 'p2') renderCollection();
+    if (tab === 'p3') renderRekod();
+    if (tab === 'p4') renderFinalReport();
+    if (tab === 'p5') initAnalisisTab();
+  }
+
+  // ===== WORKSPACE INIT =====
+  function initWorkspace() {
+    showTab('p1');
+    const classes = teachersConfig[currentTeacher];
+    const sel = document.getElementById('class-select');
+    sel.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
+    onClassChange();
+  }
+
+  function populateUnits() {
+    const cls = document.getElementById('class-select').value;
+    const form = getForm(cls);
+    const sel = document.getElementById('unit-select');
+    sel.innerHTML = '<option value="">-- Unit --</option>';
+    
+    // Get units from the Scheme of Work mapping for this form
+    const unitLSMap = formUnitLS[form] || formUnitLS["1"];
+    Object.keys(unitLSMap).forEach(unitName => {
+      sel.innerHTML += `<option value="${unitName}">${unitName}</option>`;
+    });
+  }
+
+  function onClassChange() {
+    const cls = document.getElementById('class-select').value;
+    const form = getForm(cls);
+    
+    // Populate units from Scheme of Work for this form
+    populateUnits();
+    
+    const lsSel = document.getElementById('ls-select');
+    
+    // Build LS options from certified database for this form
+    let lsOptions = '<option value="">-- LS --</option>';
+    const lsArray = officialLearningStandards[form] || [];
+    lsArray.forEach(ls => {
+      const displayText = `${ls.code}: ${ls.desc}`;
+      lsOptions += `<option value="${ls.code}">${displayText}</option>`;
+    });
+    lsSel.innerHTML = lsOptions;
+    
+    renderStudentTable(cls);
+  }
+
+  function renderStudentTable(cls) {
+    const tbody = document.getElementById('student-tbody');
+    const students = getStudentsByClass(cls);
+    tbody.innerHTML = students.map((s, i) => `
+      <tr class="border-t">
+        <td class="px-3 py-2">${i+1}</td>
+        <td class="px-3 py-2 font-medium">${s.name}</td>
+        <td class="px-3 py-2"><select class="tp-select border rounded px-2 py-1 text-xs"><option value="">--</option><option>TP1</option><option>TP2</option><option>TP3</option><option>TP4</option><option>TP5</option><option>TP6</option></select></td>
+        <td class="px-3 py-2"><select class="override-select border rounded px-2 py-1 text-xs"><option value="">--</option><option>TP1</option><option>TP2</option><option>TP3</option><option>TP4</option><option>TP5</option><option>TP6</option></select></td>
+        <td class="px-3 py-2 final-tp font-bold text-blue-700"><span class="tp-value">-</span><span class="verify-icon" style="cursor: pointer;" onclick="handleVerifyClick(this)">✓</span></td>
+      </tr>
+    `).join('');
+    // Update final TP on change
+    tbody.querySelectorAll('tr').forEach(row => {
+      const sels = row.querySelectorAll('select');
+      sels.forEach(s => s.addEventListener('change', () => {
+        const override = sels[1].value;
+        const tp = sels[0].value;
+        const finalTPCell = row.querySelector('.final-tp');
+        const tpValue = override || tp || '-';
+        finalTPCell.querySelector('.tp-value').textContent = tpValue;
+      }));
+    });
+  }
+
+  function handleVerifyClick(verifyIcon) {
+    const finalTPCell = verifyIcon.parentElement;
+    const row = finalTPCell.parentElement;
+    const studentNameCell = row.querySelector('.font-medium');
+    const studentName = studentNameCell.textContent;
+    const selectedTP = finalTPCell.querySelector('.tp-value').textContent;
+    const selectedLS = document.getElementById('ls-select').value;
+    showReflectionModal(studentName, selectedLS, selectedTP);
+  }
+
+  function applySelectAll() {
+    const val = document.getElementById('select-all-tp').value;
+    document.querySelectorAll('.tp-select').forEach(s => { s.value = val; s.dispatchEvent(new Event('change')); });
+  }
+
+  // ===== SAVE =====
+  async function saveToGoogleSheets(recordsToSave) {
+    const googleSheetsUrl = 'https://script.google.com/macros/s/AKfycbx7l6Fco_-I115GHCiFOok_WN_xLa2xKD7QeCanvm9Y-kDTlEuirF5HRQ93dMDIPb1T/exec';
+    
+    try {
+      for (const record of recordsToSave) {
+        await fetch(googleSheetsUrl, {
+          method: 'POST',
+          body: JSON.stringify(record),
+          mode: 'no-cors'
+        });
+      }
+      // Show success message
+      showCloudSyncMessage('success', `Cloud Sync Successful! ${recordsToSave.length} record(s) sent to Google Sheets.`);
+    } catch (err) {
+      console.error('Google Sheets sync error:', err);
+      // Show error message with details
+      showCloudSyncMessage('error', `Cloud Sync Error: ${err.message || 'Unknown error occurred'}`);
+    }
+  }
+
+  function showCloudSyncMessage(type, message) {
+    let msgBox = document.getElementById('cloud-sync-message-box');
+    if (!msgBox) {
+      msgBox = document.createElement('div');
+      msgBox.id = 'cloud-sync-message-box';
+      document.body.appendChild(msgBox);
+    }
+    
+    const bgColor = type === 'success' ? '#d1fae5' : '#fee2e2';
+    const borderColor = type === 'success' ? '#10b981' : '#ef4444';
+    const textColor = type === 'success' ? '#065f46' : '#7f1d1d';
+    const icon = type === 'success' ? '✓' : '✕';
+    
+    msgBox.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${bgColor};
+      border: 2px solid ${borderColor};
+      border-radius: 8px;
+      padding: 16px 20px;
+      max-width: 400px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 2000;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: ${textColor};
+      font-weight: 500;
+    `;
+    
+    msgBox.innerHTML = `<div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 18px; font-weight: bold; color: ${borderColor};">${icon}</span>
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.style.display='none'" style="background: none; border: none; color: ${textColor}; cursor: pointer; font-size: 18px; padding: 0; margin-left: 8px;">×</button>
+    </div>`;
+    
+    msgBox.style.display = 'block';
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      if (msgBox.style.display !== 'none') {
+        msgBox.style.display = 'none';
+      }
+    }, 5000);
+  }
+
+  async function saveData() {
+    const date = document.getElementById('date-input').value;
+    const cls = document.getElementById('class-select').value;
+    const unit = document.getElementById('unit-select').value;
+    const ls = document.getElementById('ls-select').value;
+    const rows = document.querySelectorAll('#student-tbody tr');
+    const statusEl = document.getElementById('save-status');
+    const errorEl = document.getElementById('save-error');
+    statusEl.classList.add('hidden'); errorEl.classList.add('hidden');
+
+    if (!date || !unit || !ls) { errorEl.textContent = 'Please fill date, unit & learning standard'; errorEl.classList.remove('hidden'); return; }
+
+    const students = getStudentsByClass(cls);
+    let savedCount = 0;
+    const recordsToSync = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const finalTpText = row.querySelector('.final-tp').textContent.trim().split(' ')[0];
+      const finalTp = finalTpText !== '-' ? finalTpText : '';
+      if (finalTp) {
+        if (allRecords.length >= 999) { errorEl.textContent = 'Record limit (999) reached!'; errorEl.classList.remove('hidden'); return; }
+        
+        const recordData = {
+          teacher: currentTeacher, 
+          class_name: cls, 
+          student_name: students[i].name,
+          date, 
+          unit, 
+          learning_standard: ls, 
+          tp_level: row.querySelector('.tp-select').value,
+          override_tp: row.querySelector('.override-select').value, 
+          final_tp: finalTp
+        };
+        
+        const result = await window.dataSdk.create(recordData);
+        if (result.isOk) {
+          savedCount++;
+          recordsToSync.push(recordData);
+        } else { 
+          errorEl.textContent = 'Error saving'; 
+          errorEl.classList.remove('hidden'); 
+          return; 
+        }
+      }
+    }
+    
+    if (recordsToSync.length > 0) {
+      await saveToGoogleSheets(recordsToSync);
+    }
+    
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 2000);
+  }
+
+  // ===== TP COLLECTION (Tab 2) =====
+  function renderCollection() {
+    const classes = teachersConfig[currentTeacher];
+    if (!collectionActiveClass || !classes.includes(collectionActiveClass)) collectionActiveClass = classes[0];
+    const tabsEl = document.getElementById('collection-class-tabs');
+    tabsEl.innerHTML = classes.map(c => `<button class="px-3 py-1 rounded text-sm font-semibold ${c===collectionActiveClass?'bg-purple-900 text-white':'bg-gray-200'}" onclick="collectionActiveClass='${c}';renderCollection()">${c}</button>`).join('');
+
+    const cls = collectionActiveClass;
+    const students = getStudentsByClass(cls);
+    const records = allRecords.filter(r => r.teacher === currentTeacher && r.class_name === cls);
+
+    // Build dynamic columns from transaction history (unique LS + date + unit combinations, sorted by date ascending then by order added)
+    const transactionColumns = [];
+    const seenKey = new Set();
+    // Sort records by date ascending to ensure consistent column order
+    const sortedRecords = records.slice().sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      // If same date, maintain insertion order (stable sort)
+      return records.indexOf(a) - records.indexOf(b);
+    });
+    sortedRecords.forEach(rec => {
+      const key = `${rec.learning_standard}|${rec.date}|${rec.unit}`;
+      if (!seenKey.has(key)) {
+        seenKey.add(key);
+        transactionColumns.push({
+          ls: rec.learning_standard,
+          unit: rec.unit,
+          date: rec.date
+        });
+      }
+    });
+
+    // Multi-row header with three stacked rows
+    let html = `<table class="w-full text-xs"><thead class="bg-gray-100">`;
+    // Row 1: Learning Standard codes (top)
+    html += `<tr><th class="px-2 py-1 text-left border-b">No</th><th class="px-2 py-1 text-left border-b">Student Name</th>`;
+    transactionColumns.forEach(col => {
+      html += `<th class="px-2 py-1 text-center border-l border-b font-semibold">${col.ls}</th>`;
+    });
+    html += `</tr>`;
+    // Row 2: Unit (middle)
+    html += `<tr><th colspan="2" class="px-2 py-1 text-left border-b font-semibold text-gray-700">Unit</th>`;
+    transactionColumns.forEach(col => {
+      html += `<td class="px-2 py-1 text-center border-l border-b text-xs">${col.unit}</td>`;
+    });
+    html += `</tr>`;
+    // Row 3: Date (bottom)
+    html += `<tr><th colspan="2" class="px-2 py-1 text-left border-b font-semibold text-gray-700">Date</th>`;
+    transactionColumns.forEach(col => {
+      html += `<td class="px-2 py-1 text-center border-l border-b text-xs">${col.date}</td>`;
+    });
+    html += `</tr>`;
+    html += `</thead><tbody>`;
+
+    // Data rows
+    students.forEach((s, i) => {
+      html += `<tr class="border-t"><td class="px-2 py-1">${i+1}</td><td class="px-2 py-1 font-medium">${s.name}</td>`;
+      transactionColumns.forEach(col => {
+        const rec = records.find(r => r.student_name === s.name && r.learning_standard === col.ls && r.date === col.date && r.unit === col.unit);
+        html += `<td class="px-2 py-1 text-center border-l">${rec ? rec.final_tp : '-'}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('collection-table').innerHTML = html;
+  }
+
+  // ===== REKOD TRANSIT (Tab 3) =====
+  function renderRekod() {
+    const classes = teachersConfig[currentTeacher];
+    if (!rekodActiveClass || !classes.includes(rekodActiveClass)) rekodActiveClass = classes[0];
+    const tabsEl = document.getElementById('rekod-class-tabs');
+    tabsEl.innerHTML = classes.map(c => `<button class="px-3 py-1 rounded text-sm font-semibold ${c===rekodActiveClass?'bg-purple-900 text-white':'bg-gray-200'}" onclick="rekodActiveClass='${c}';renderRekod()">${c}</button>`).join('');
+
+    const cls = rekodActiveClass;
+    const form = getForm(cls);
+    const students = getStudentsByClass(cls);
+    const records = allRecords.filter(r => r.teacher === currentTeacher && r.class_name === cls);
+    const unitLSMap = formUnitLS[form] || formUnitLS["1"];
+
+    // Build mapping: unit + ls -> date (latest date for that unit+LS combination from saved records)
+    const unitLsDateMap = {};
+    records.forEach(rec => {
+      if (rec.learning_standard && rec.unit) {
+        const key = `${rec.unit}|${rec.learning_standard}`;
+        unitLsDateMap[key] = rec.date;
+      }
+    });
+
+    // Multi-row header with Unit headers spanning LS columns
+    let html = `<table class="w-full text-xs"><thead class="bg-gray-700 text-white">`;
+    
+    // Row 1: Unit headers (spanning LS columns)
+    html += `<tr><th class="px-2 py-1 text-left border-r">No</th><th class="px-2 py-1 text-left border-r">Student Name</th>`;
+    Object.entries(unitLSMap).forEach(([unitName, lsArray]) => {
+      html += `<th class="px-2 py-1 text-center border-r" colspan="${lsArray.length}" style="background-color: #374151;">${unitName}</th>`;
+    });
+    html += `</tr>`;
+    
+    // Row 2: Individual LS codes
+    html += `<tr><th class="px-2 py-1 text-left border-r"></th><th class="px-2 py-1 text-left border-r"></th>`;
+    Object.entries(unitLSMap).forEach(([unitName, lsArray]) => {
+      lsArray.forEach(ls => {
+        html += `<th class="px-2 py-1 text-center border-r">${ls}</th>`;
+      });
+    });
+    html += `</tr>`;
+    
+    // Row 3: Dates
+    html += `<tr><th class="px-2 py-1 text-left border-r"></th><th class="px-2 py-1 text-left border-r"></th>`;
+    Object.entries(unitLSMap).forEach(([unitName, lsArray]) => {
+      lsArray.forEach(ls => {
+        const key = `${unitName}|${ls}`;
+        const date = unitLsDateMap[key] || '-';
+        html += `<td class="px-2 py-1 text-center border-r text-xs">${date}</td>`;
+      });
+    });
+    html += `</tr>`;
+    html += `</thead><tbody>`;
+
+    // Data rows (all students × all standards from curriculum, scoped to unit where assessment was saved)
+    students.forEach((s, i) => {
+      html += `<tr class="border-t"><td class="px-2 py-1 border-r">${i+1}</td><td class="px-2 py-1 font-medium border-r">${s.name}</td>`;
+      Object.entries(unitLSMap).forEach(([unitName, lsArray]) => {
+        lsArray.forEach(ls => {
+          // Only show score if record exists for THIS UNIT and THIS LS
+          const rec = records.find(r => r.student_name === s.name && r.learning_standard === ls && r.unit === unitName);
+          const score = rec ? rec.final_tp : '-';
+          html += `<td class="px-2 py-1 text-center border-r">${score}</td>`;
+        });
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('rekod-table').innerHTML = html;
+  }
+
+  // ===== FINAL REPORT (Tab 4) =====
+  let reportActiveClass = null;
+
+  function calculateSkillTP(studentName, skillPrefix, records) {
+    // skillPrefix: "1" for Listening, "2" for Speaking, "3" for Reading, "4" for Writing, "5" for Literature
+    const skillRecords = records.filter(r => r.student_name === studentName && r.learning_standard.charAt(0) === skillPrefix);
+    if (skillRecords.length === 0) return '-';
+    
+    // Extract TP levels from final_tp (e.g., "TP4" -> "4")
+    const tpValues = skillRecords.map(r => {
+      const match = r.final_tp.match(/\d/);
+      return match ? parseInt(match[0]) : null;
+    }).filter(v => v !== null);
+    
+    if (tpValues.length === 0) return '-';
+    
+    // Calculate mode (most frequent)
+    const frequencyMap = {};
+    tpValues.forEach(tp => {
+      frequencyMap[tp] = (frequencyMap[tp] || 0) + 1;
+    });
+    
+    const maxFreq = Math.max(...Object.values(frequencyMap));
+    const modes = Object.keys(frequencyMap).filter(tp => frequencyMap[tp] === maxFreq).map(Number);
+    
+    // If tie, choose higher TP; otherwise choose the mode
+    const finalTP = Math.max(...modes);
+    return `TP${finalTP}`;
+  }
+
+  function renderFinalReport() {
+    const classes = teachersConfig[currentTeacher];
+    if (!reportActiveClass || !classes.includes(reportActiveClass)) reportActiveClass = classes[0];
+    const tabsEl = document.getElementById('report-class-tabs');
+    tabsEl.innerHTML = classes.map(c => `<button class="px-3 py-1 rounded text-sm font-semibold ${c===reportActiveClass?'bg-indigo-700 text-white':'bg-gray-200'}" onclick="reportActiveClass='${c}';renderFinalReport()">${c}</button>`).join('');
+
+    const cls = reportActiveClass;
+    const students = getStudentsByClass(cls);
+    const records = allRecords.filter(r => r.teacher === currentTeacher && r.class_name === cls);
+    
+    // TP Descriptors by Form and Skill for Teacher Reflection
+  const tpReflectionDescriptors = {
+    "1": {
+      "1": { // Listening - Form 1
+        "1": "Hardly understands main ideas and specific details; hardly shows any understanding of instructions, questions, or unfamiliar words even with support.",
+        "2": "Acquires limited understanding of main ideas and specific details with a lot of support.",
+        "3": "Acquires adequate understanding of main ideas, specific details, classroom instructions, complex questions, and unfamiliar words.",
+        "4": "Acquires good understanding of main ideas, specific details, classroom instructions, complex questions, and unfamiliar words.",
+        "5": "Acquires very good understanding of main ideas, specific details, classroom instructions, complex questions, and unfamiliar words.",
+        "6": "Independently understands main ideas and specific details; shows excellent understanding of instructions and questions; serves as an exemplary language model."
+      },
+      "2": { // Speaking - Form 1
+        "1": "Hardly communicates information clearly; hardly manages interaction or narrates stories even with support.",
+        "2": "Limited ability to find out about and communicate information clearly; limited narration and interaction management.",
+        "3": "Adequate ability to communicate information clearly; satisfactory response in managing interaction and narrating stories.",
+        "4": "Good response in communicating information clearly, managing interaction, and narrating stories or events.",
+        "5": "Very good response in communicating information clearly, managing interaction, and narrating stories or events.",
+        "6": "Excellent response in communicating information and opinions about stories and events; serves as an exemplary language model."
+      },
+      "3": { // Reading - Form 1
+        "1": "Hardly identifies main ideas and details; minimal ability to use dictionary skills or read fiction and non-fiction texts even with guidance.",
+        "2": "Limited understanding in identifying main ideas and details; limited dictionary skills and reading ability even with guidance.",
+        "3": "Adequate understanding in identifying main ideas and details; satisfactory dictionary skills and ability to read variety of texts.",
+        "4": "Good understanding in identifying main ideas and details; positive attitude toward dictionary use and interest in reading diverse texts.",
+        "5": "Very good understanding; skilful and precise use of dictionary skills; strong interest in reading and giving opinions on texts.",
+        "6": "Excellent and independent reading and dictionary skills; reads and gives opinions on texts independently; serves as an exemplary language model."
+      },
+      "4": { // Writing - Form 1
+        "1": "Hardly expresses ideas or organizes info coherently; minimal punctuation and spelling accuracy; hardly plans, drafts, or edits even with guidance.",
+        "2": "Limited ability to express ideas and organize info; limited punctuation, spelling, and planning ability.",
+        "3": "Adequate ability to express ideas and organize info; adequate punctuation and spelling; plans and edits in response to feedback.",
+        "4": "Commendable level of expression and organization; commendable punctuation and spelling; plans and edits correctly in response to feedback.",
+        "5": "High level of ability to express ideas and organize info; high accuracy in punctuation and spelling; plans and edits effortlessly.",
+        "6": "Expresses ideas and opinions independently; excellent punctuation and spelling; plans, drafts, and edits work independently; serves as an exemplary language model."
+      }
+    },
+    "2": {
+      "1": { // Listening - Form 2
+        "1": "Hardly understands main ideas and specific details; hardly shows understanding of instructions or questions even with support.",
+        "2": "Acquires limited understanding of main ideas and details with a lot of support.",
+        "3": "Acquires adequate understanding of main ideas, specific details, classroom instructions, and complex questions.",
+        "4": "Acquires good understanding of main ideas, details, classroom instructions, and complex questions.",
+        "5": "Acquires very good understanding of main ideas, details, classroom instructions, and complex questions.",
+        "6": "Independently understands main ideas and details; excellent understanding of instructions and questions; serves as an exemplary language model."
+      },
+      "2": { // Speaking - Form 2
+        "1": "Hardly communicates info, opinions, or feelings clearly; hardly manages interaction even with support.",
+        "2": "Displays limited ability to communicate info, opinions, and feelings clearly; limited narration and interaction management.",
+        "3": "Displays adequate ability to communicate info, opinions, and feelings clearly; satisfactory interaction management and narration.",
+        "4": "Displays good response in communicating info, opinions, and feelings clearly; good interaction management and narration.",
+        "5": "Displays very good response in communicating info, opinions, and feelings clearly; very good interaction management and narration.",
+        "6": "Displays excellent response in communicating info, opinions, and feelings clearly; excellent interaction management and story narration; serves as an exemplary language model."
+      },
+      "3": { // Reading - Form 2
+        "1": "Hardly understands identifying main ideas and details; minimal dictionary skills and ability to read variety of texts.",
+        "2": "Displays limited understanding in identifying main ideas and details with a lot of support.",
+        "3": "Displays adequate understanding of reading skills in identifying main ideas and details; satisfactory dictionary skills and interest in reading.",
+        "4": "Displays good understanding of reading skills; positive attitude toward dictionary use and interest in reading diverse texts.",
+        "5": "Displays very good understanding of reading skills; uses dictionary skills precisely; strong interest in giving personal response to texts.",
+        "6": "Excellent and independent reading and dictionary skills; gives personal responses to texts independently; serves as an exemplary language model."
+      },
+      "4": { // Writing - Form 2
+        "1": "Hardly expresses or organizes info/ideas/feelings; minimal punctuation and spelling accuracy; hardly plans, drafts, or edits even with guidance.",
+        "2": "Displays limited ability to express and organize info/ideas/feelings coherently; limited punctuation and spelling accuracy.",
+        "3": "Displays adequate ability to express and organize info/ideas/feelings coherently; adequate punctuation and spelling; plans and edits work adequately.",
+        "4": "Displays a commendable level of expression and organization; commendable punctuation and spelling; plans and edits with little support.",
+        "5": "Displays a high level of ability to express and organize info/ideas/feelings; high level of punctuation and spelling accuracy; plans and edits well in response to feedback.",
+        "6": "Independently writes and organizes ideas, opinions, and feelings; excellent punctuation and spelling; plans work independently; serves as an exemplary language model."
+      }
+    },
+    "3": {
+      "1": { // Listening - Form 3
+        "1": "Hardly understands main ideas, details, or opinions on increased topics even with a lot of support.",
+        "2": "Shows limited ability to understand main ideas, details, opinions, narratives, and word meanings with support.",
+        "3": "Shows adequate ability to understand main ideas, details, opinions, narratives, and word meanings.",
+        "4": "Shows good ability to understand main ideas, details, opinions, narratives, and word meanings.",
+        "5": "Shows very good ability to understand main ideas, details, and opinions on increased range of topics.",
+        "6": "Shows excellent ability to understand main ideas and details; excellent grasp of narratives and spoken features of genres."
+      },
+      "2": { // Speaking - Form 3
+        "1": "Hardly communicates information, plans, ambitions, or feelings; hardly manages interaction even with support.",
+        "2": "Shows limited ability to communicate info, plans, ambitions, and feelings clearly with support.",
+        "3": "Displays adequate ability to communicate info, plans, and feelings clearly; satisfactory interaction management and narration.",
+        "4": "Displays good ability to communicate info, plans, and feelings clearly; good interaction management and narration.",
+        "5": "Displays very good ability to communicate info, plans, and feelings clearly; manages interaction using various registers.",
+        "6": "Displays excellent ability to communicate clearly, manage interaction, and summarize stories; serves as an exemplary language model."
+      },
+      "3": { // Reading - Form 3
+        "1": "Hardly understands main points or specific details in longer texts even with support.",
+        "2": "Shows limited ability to understand main points/details and use resources even with support.",
+        "3": "Displays adequate ability to understand main points/details; uses resources independently to check meaning.",
+        "4": "Shows good ability to understand main points/details; uses resources independently; recognizes writer attitude.",
+        "5": "Displays very good ability to understand points/details; recognizes writer attitudes and provides personal responses.",
+        "6": "Displays excellent ability to understand points/details; provides excellent personal responses; serves as an exemplary language model."
+      },
+      "4": { // Writing - Form 3
+        "1": "Hardly summarizes main points, expresses info, or uses registers accurately even with support.",
+        "2": "Shows limited ability to summarize points, express info/feelings, or plan and modify work.",
+        "3": "Shows adequate ability to summarize points, express info, and independently plan/draft two paragraphs.",
+        "4": "Shows good ability to summarize points and explain key details; expresses and organizes info clearly.",
+        "5": "Shows very good ability to summarize points and explain key details; very good expression and organization.",
+        "6": "Displays excellent ability to summarize points and express info/feelings independently; serves as an exemplary language model."
+      }
+    },
+    "4": {
+      "1": { // Listening - Form 4
+        "1": "Minimal understanding of main ideas, details, and opinions in extended texts after repeated listening with support.",
+        "2": "Some understanding of main ideas, details, and opinions in extended texts with a lot of support.",
+        "3": "Understands main ideas, details, and attitudes independently in extended texts; guesses word meanings adequately.",
+        "4": "Understands main ideas, details, and attitudes independently by responding clearly to given tasks at times.",
+        "5": "Understands main ideas, details, and attitudes independently by responding clearly to tasks most of the time.",
+        "6": "Spontaneously and clearly understands main ideas and attitudes; understands narratives in own words at all times; can guide others."
+      },
+      "2": { // Speaking - Form 4
+        "1": "Minimal ability to communicate information, feelings, plans, and ambitions even with support.",
+        "2": "Some ability to communicate information, feelings, plans, and ambitions with a lot of support.",
+        "3": "Communicates information, feelings, plans, and ambitions clearly; manages interaction and justifies points of view.",
+        "4": "Communicates information/feelings clearly by providing some relevant details; sustains interaction occasionally.",
+        "5": "Communicates information/feelings clearly by providing a lot of relevant details; sustains interaction most of the time.",
+        "6": "Communicates information clearly and confidently with a lot of relevant details; sustains interaction naturally; serves as exemplary model."
+      },
+      "3": { // Reading - Form 4
+        "1": "Minimal understanding of main ideas and specific details in extended texts even with support.",
+        "2": "Some understanding of main ideas, specific details, and information with a lot of support.",
+        "3": "Understands main ideas, specific details, and information adequately; independently uses dictionary skills adequately.",
+        "4": "Understands main ideas and details in extended texts by responding clearly to tasks most of the time.",
+        "5": "Understands main ideas and details in extended texts by responding clearly to tasks at all times.",
+        "6": "Understands main ideas and details effectively; uses dictionary skills effectively; investigates national issues effectively; can guide others."
+      },
+      "4": { // Writing - Form 4
+        "1": "Minimal ability to communicate information, ideas, or feelings; minimal ability to produce or modify plans.",
+        "2": "Some ability to communicate information, ideas, and feelings as well as organize information with support.",
+        "3": "Communicates info, ideas, and feelings clearly; organizes info coherently; produces extended plans independently.",
+        "4": "Communicates info and feelings clearly with very few relevant details; produces plans with very few details.",
+        "5": "Communicates info and feelings clearly with some relevant details; produces plans with some relevant details.",
+        "6": "Communicates info and feelings clearly using a variety of relevant details; produces/modifies plans with variety of details; serves as exemplary model."
+      }
+    },
+    "5": {
+      "1": { // Listening - Form 5
+        "1": "Minimal understanding of main ideas, specific details, and attitudes/opinions in extended texts after repeated listening with a lot of support.",
+        "2": "Some understanding of main ideas, specific details, and attitudes/opinions in extended texts with a lot of support.",
+        "3": "Understands main ideas, specific details, and attitudes/opinions independently in extended texts; understands complex narratives and guesses word meanings adequately.",
+        "4": "Understands main ideas, details, and attitudes/opinions independently in extended texts by responding clearly to tasks at times; understands complex narratives in own words at times.",
+        "5": "Understands main ideas, details, and attitudes/opinions independently in extended texts by responding clearly to tasks most of the time; understands complex narratives in own words most of the time.",
+        "6": "Spontaneously and clearly understands main ideas, details, and attitudes/opinions in extended texts; understands complex narratives in own words at all times; can guide others."
+      },
+      "2": { // Speaking - Form 5
+        "1": "Minimal ability to ask about/communicate info, manage interaction, use registers, and explain points of view/feelings/plans with support.",
+        "2": "Some ability to ask about/communicate info, manage interaction, use registers, and explain points of view/feelings/plans with support.",
+        "3": "Communicates info adequately; manages interaction by paraphrasing/rephrasing and uses registers appropriately; explains/justifies points of view, feelings, and plans.",
+        "4": "Communicates info by providing some relevant details; sustains interaction and justifies points of view/feelings/plans occasionally.",
+        "5": "Communicates info clearly with a lot of relevant details; sustains interaction and justifies points of view/feelings/plans most of the time.",
+        "6": "Communicates info clearly and confidently with a lot of relevant details with ease; sustains interaction at all times; serves as an exemplary model and can guide others."
+      },
+      "3": { // Reading - Form 5
+        "1": "Minimal understanding of main ideas/details in extended texts; minimal ability to use dictionary skills or investigate global issues even with support.",
+        "2": "Some understanding of main ideas and specific details in extended texts with a lot of support.",
+        "3": "Understands main ideas, details, and info in extended texts adequately; independently uses dictionary skills; investigates and analyzes global issues and recognizes writer attitudes adequately.",
+        "4": "Understands main ideas and details in extended texts by responding clearly to tasks most of the time; independently uses dictionary skills appropriately.",
+        "5": "Understands main ideas and details in extended texts by responding clearly to tasks at all times; independently uses dictionary skills appropriately; investigates global issues by responding clearly at all times.",
+        "6": "Understands main ideas and details effectively; uses dictionary skills effectively; investigates and analyzes global issues effectively; can guide others."
+      },
+      "4": { // Writing - Form 5
+        "1": "Minimal ability to communicate info/ideas/feelings/opinions, produce/modify plans, or use registers and punctuation with support.",
+        "2": "Some ability to communicate info/ideas/feelings/opinions and produce/modify plans with a lot of support.",
+        "3": "Communicates info, ideas, feelings, and opinions clearly; organizes info coherently; produces plan or draft and modifies appropriately independently; uses registers appropriately and punctuates/spells with reasonable accuracy.",
+        "4": "Communicates info and feelings clearly with very few relevant details; organizes info coherently with very few relevant details; produces plans independently.",
+        "5": "Communicates info and feelings clearly with some relevant details; organizes info coherently with some relevant details; produces plans independently with some relevant details.",
+        "6": "Communicates info and feelings clearly using a variety of relevant details; organizes info coherently using variety of details; produces/modifies plans independently with variety of details; serves as an exemplary language model and can guide others."
+      }
+    }
+  };
+
+  // Coaching questions by Form, Skill, and current TP level
+  const coachingQuestions = {
+    "1": {
+      "1": { // Listening - Form 1
+        "1": "Is this student beginning to identify any key vocabulary or simple instructions with consistent repetition and visual support?",
+        "2": "Can this student now pick out main ideas without as much support, or identify specific details when you slow down your speech?",
+        "3": "Is this student responding accurately to complex classroom instructions and unfamiliar words most of the time?",
+        "4": "Does this student understand instructions fluently and can now explain what they heard to a peer?",
+        "5": "Can this student listen to extended narratives and summarize key details independently, serving as a strong peer model?"
+      },
+      "2": { // Speaking - Form 1
+        "1": "Is this student attempting to communicate simple ideas with significant prompting, even if pronunciation or structure needs work?",
+        "2": "Can this student now answer straightforward questions or share basic information with visual aids or sentence starters?",
+        "3": "Is this student speaking clearly about familiar topics and managing turn-taking in paired conversations?",
+        "4": "Does this student use a range of phrases and manage conversations naturally, supporting peers occasionally?",
+        "5": "Can this student narrate stories with fluency, expression, and confidence, modeling excellent communication for classmates?"
+      },
+      "3": { // Reading - Form 1
+        "1": "Is this student starting to locate simple words or recognize basic sight words with targeted guidance?",
+        "2": "Can this student now identify a few main ideas in very simple, supported texts or use a dictionary for familiar words?",
+        "3": "Is this student reading with adequate fluency and understanding details across a range of short texts?",
+        "4": "Does this student enjoy reading independently and use dictionary skills to explore new vocabulary?",
+        "5": "Can this student read complex texts, discuss author intent, and model confident, curious reading behaviours?"
+      },
+      "4": { // Writing - Form 1
+        "1": "Is this student attempting to write simple words or copy sentences, showing emerging fine motor control?",
+        "2": "Can this student now organize 2–3 simple sentences with support, using basic punctuation?",
+        "3": "Is this student writing clear, organized paragraphs with adequate spelling and punctuation when given feedback?",
+        "4": "Does this student respond to editing suggestions and produce well-organized, correctly punctuated work?",
+        "5": "Can this student draft and revise extended pieces independently, demonstrating excellent technical control and expression?"
+      }
+    },
+    "2": {
+      "1": { // Listening - Form 2
+        "1": "Is this student recognizing any repeated key words or main topics when listening materials are repeated and simplified?",
+        "2": "Can this student identify main ideas when given some contextual support or visual aids?",
+        "3": "Is this student following classroom instructions independently and catching most specific details?",
+        "4": "Does this student understand new topics fluently and can explain instructions to others?",
+        "5": "Can this student listen to complex narratives and synthesize information independently, supporting peers as a learning resource?"
+      },
+      "2": { // Speaking - Form 2
+        "1": "Is this student attempting to express simple feelings or facts with heavy prompting or sentence frames?",
+        "2": "Can this student now share opinions or describe events with visual support or word banks?",
+        "3": "Is this student expressing ideas and managing conversations naturally on familiar topics?",
+        "4": "Does this student communicate with increasing confidence, adding relevant details and sustaining longer exchanges?",
+        "5": "Can this student articulate complex opinions fluently, manage diverse conversational contexts, and mentor peers?"
+      },
+      "3": { // Reading - Form 2
+        "1": "Is this student recognizing familiar text types or locating basic information with substantial support?",
+        "2": "Can this student identify main ideas in supported texts and use a dictionary to check a few words?",
+        "3": "Is this student reading with adequate speed and understanding across varied texts?",
+        "4": "Does this student engage independently with reading and use dictionary skills confidently?",
+        "5": "Can this student analyze texts, give personal interpretations, and recommend books to peers with enthusiasm and insight?"
+      },
+      "4": { // Writing - Form 2
+        "1": "Is this student attempting short sentences or lists with heavy support, showing willingness to express ideas?",
+        "2": "Can this student now organize simple ideas into a short paragraph with word banks and feedback?",
+        "3": "Is this student writing coherently organized ideas with adequate spelling and punctuation?",
+        "4": "Does this student revise work thoughtfully with minimal support, maintaining good organization and accuracy?",
+        "5": "Can this student write persuasive or creative pieces independently with strong organization and technical excellence?"
+      }
+    },
+    "3": {
+      "1": { // Listening - Form 3
+        "1": "Is this student catching key words or main themes when materials are simplified or repeated multiple times?",
+        "2": "Can this student follow a straightforward narrative or extract some specific details with visual or contextual clues?",
+        "3": "Is this student understanding most main ideas and details across varied topics independently?",
+        "4": "Does this student understand nuanced opinions and complex narratives most of the time?",
+        "5": "Can this student listen to sophisticated material, grasp implicit meanings, and synthesize across sources independently?"
+      },
+      "2": { // Speaking - Form 3
+        "1": "Is this student attempting to share plans or feelings with significant support, showing emerging communication intent?",
+        "2": "Can this student express basic ambitions or describe events with visual aids or structured practice?",
+        "3": "Is this student communicating plans and feelings clearly and managing extended conversations on familiar topics?",
+        "4": "Does this student sustain interaction well, justify viewpoints, and contribute confidently to group discussions?",
+        "5": "Can this student articulate complex ambitions, use varied registers, and model sophisticated communication for peers?"
+      },
+      "3": { // Reading - Form 3
+        "1": "Is this student locating key facts in simple, familiar texts with high support?",
+        "2": "Can this student identify main ideas and some details in slightly complex texts with teacher support?",
+        "3": "Is this student independently understanding main ideas and recognizing when to check resources for meaning?",
+        "4": "Does this student read critically, noticing author tone and expressing personal responses confidently?",
+        "5": "Can this student analyze complex texts, articulate nuanced interpretations, and guide peers in critical reading?"
+      },
+      "4": { // Writing - Form 3
+        "1": "Is this student attempting to summarize or describe events, showing emerging organizational thinking?",
+        "2": "Can this student draft simple summaries with support and attempt to organize ideas sequentially?",
+        "3": "Is this student writing clear summaries with logical organization and developing two-paragraph compositions?",
+        "4": "Does this student explain ideas well with supporting details and revise drafts meaningfully?",
+        "5": "Can this student produce sophisticated writing that summarizes, explains, and organizes multiple viewpoints effectively?"
+      }
+    },
+    "4": {
+      "1": { // Listening - Form 4
+        "1": "Is this student beginning to recognize familiar contexts or repeated vocabulary in extended listening after multiple exposures?",
+        "2": "Can this student follow the gist of longer passages when language is not too complex and some support is given?",
+        "3": "Is this student independently grasping main ideas and most details in extended texts?",
+        "4": "Does this student respond clearly to comprehension tasks most times and understand implicit meanings?",
+        "5": "Can this student understand extended, complex material, respond consistently, and help peers interpret difficult passages?"
+      },
+      "2": { // Speaking - Form 4
+        "1": "Is this student making attempts to express information or feelings with heavy scaffolding, showing communication effort?",
+        "2": "Can this student share information with sentence starters or structured practice, though fluency is limited?",
+        "3": "Is this student expressing ideas clearly with justification and managing turn-taking in extended conversations?",
+        "4": "Does this student sustain interaction confidently, providing some supporting details and managing discussion naturally?",
+        "5": "Can this student communicate with rich detail, maintain complex discussions, and mentor peers in oral expression?"
+      },
+      "3": { // Reading - Form 4
+        "1": "Is this student finding basic information in short, familiar passages with substantial teacher guidance?",
+        "2": "Can this student locate main ideas and some details in longer texts when context is provided?",
+        "3": "Is this student understanding main ideas and details adequately, using reference materials independently?",
+        "4": "Does this student respond correctly to most comprehension tasks and investigate topics using resources?",
+        "5": "Can this student analyze complex texts fluently, investigate sophisticated topics, and support peers in academic reading?"
+      },
+      "4": { // Writing - Form 4
+        "1": "Is this student attempting to organize ideas in writing, though expression is minimal and support is essential?",
+        "2": "Can this student draft ideas with structure and some coherence when given substantial guidance?",
+        "3": "Is this student producing clear, coherent writing with logical organization and independent planning?",
+        "4": "Does this student communicate clearly with focused detail and create extended plans with minimal revision?",
+        "5": "Can this student produce sophisticated writing with varied, relevant supporting details and revise autonomously for impact?"
+      }
+    },
+    "5": {
+      "1": { // Listening - Form 5
+        "1": "Is this student catching key phrases or main topics in familiar contexts despite language complexity?",
+        "2": "Can this student follow longer passages with simplified support, identifying some main ideas and attitudes?",
+        "3": "Is this student independently understanding complex texts, including implicit attitudes and nuanced narratives?",
+        "4": "Does this student respond clearly to comprehension tasks on most occasions, grasping complex narratives?",
+        "5": "Can this student understand highly sophisticated material, synthesize across sources, and guide peers in interpreting challenging content?"
+      },
+      "2": { // Speaking - Form 5
+        "1": "Is this student attempting to ask questions or explain viewpoints with structured support, showing communication intent?",
+        "2": "Can this student express basic ideas and justify positions with scaffolding, though fluency varies?",
+        "3": "Is this student explaining viewpoints clearly, using varied registers, and paraphrasing to clarify meaning?",
+        "4": "Does this student sustain interaction on complex topics, justify positions occasionally, and communicate with growing confidence?",
+        "5": "Can this student communicate with eloquence, justify sophisticated viewpoints, and model excellent academic discussion?"
+      },
+      "3": { // Reading - Form 5
+        "1": "Is this student locating information in familiar, supported texts, though analysis is limited?",
+        "2": "Can this student understand main ideas in longer texts with contextual support?",
+        "3": "Is this student understanding complex texts, using reference tools independently, and analyzing global issues?",
+        "4": "Does this student respond accurately to most comprehension tasks and investigate issues appropriately?",
+        "5": "Can this student deeply analyze sophisticated texts, investigate complex issues fluently, and mentor peers in critical reading?"
+      },
+      "4": { // Writing - Form 5
+        "1": "Is this student attempting to express ideas in writing, though organization and register awareness are emerging?",
+        "2": "Can this student draft organized ideas with support, showing awareness of audience and purpose?",
+        "3": "Is this student clearly expressing ideas and opinions with coherent organization and appropriate register?",
+        "4": "Does this student produce coherent writing with focused details and independent planning?",
+        "5": "Can this student produce sophisticated writing with varied, compelling details and revise autonomously for maximum impact, modeling excellence?"
+      }
+    }
+  };
+
+  const skillInfo = {
+      '1': { name: 'Listening', color: '#0369a1', bgLight: '#f0f9ff' },
+      '2': { name: 'Speaking', color: '#7c3aed', bgLight: '#faf5ff' },
+      '3': { name: 'Reading', color: '#059669', bgLight: '#f0fdf4' },
+      '4': { name: 'Writing', color: '#dc2626', bgLight: '#fef2f2' }
+    };
+    
+    let html = '<div class="space-y-8">';
+    
+    students.forEach((student, idx) => {
+      html += `<div class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4" style="border-top-color: #4c1d95;">`;
+      html += `<div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b">`;
+      html += `<h3 class="text-lg font-bold text-slate-800">${idx + 1}. ${student.name}</h3>`;
+      html += `</div>`;
+      html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">`;
+      
+      Object.keys(skillInfo).forEach(skillPrefix => {
+        const info = skillInfo[skillPrefix];
+        const tp = calculateSkillTP(student.name, skillPrefix, records);
+        
+        // Extract numeric value for visual rendering
+        const tpNum = tp !== '-' ? parseInt(tp.match(/\d/)[0]) : 0;
+        const progressWidth = (tpNum / 6) * 100;
+        
+        // Get form and reflection data
+        const form = getForm(cls);
+        const currentTpNum = tpNum;
+        const descriptor = tpReflectionDescriptors[form] && tpReflectionDescriptors[form][skillPrefix] 
+          ? tpReflectionDescriptors[form][skillPrefix][currentTpNum] || '-' 
+          : '-';
+        const nextTpNum = currentTpNum < 6 ? currentTpNum + 1 : 6;
+        const nextDescriptor = tpReflectionDescriptors[form] && tpReflectionDescriptors[form][skillPrefix]
+          ? tpReflectionDescriptors[form][skillPrefix][nextTpNum] || '-'
+          : '-';
+        const coachingQ = coachingQuestions[form] && coachingQuestions[form][skillPrefix]
+          ? coachingQuestions[form][skillPrefix][currentTpNum] || '-'
+          : '-';
+        
+        html += `<div class="rounded-lg p-4" style="background-color: ${info.bgLight}; border-left: 4px solid ${info.color};">`;
+        html += `<div class="text-sm font-semibold text-slate-700 mb-2">${info.name}</div>`;
+        html += `<div class="text-2xl font-bold mb-3" style="color: ${info.color};">${tp}</div>`;
+        html += `<div class="text-xs text-slate-600 mb-2">Performance Level</div>`;
+        html += `<div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">`;
+        html += `<div class="h-full rounded-full transition-all" style="width: ${progressWidth}%; background-color: ${info.color};"></div>`;
+        html += `</div>`;
+        
+        // Teacher Reflect Corner
+        if (tp !== '-') {
+          html += `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid ${info.color}30; font-size: 12px;">`;
+          html += `<div style="font-weight: 600; color: ${info.color}; margin-bottom: 8px;">🎯 Teacher Reflect</div>`;
+          html += `<div style="color: #4b5563; margin-bottom: 6px;"><strong>Current:</strong> ${descriptor}</div>`;
+          if (currentTpNum < 6) {
+            html += `<div style="color: #4b5563; margin-bottom: 6px;"><strong>Next Level (TP${nextTpNum}):</strong> ${nextDescriptor}</div>`;
+          }
+          html += `<div style="color: ${info.color}; font-style: italic; margin-top: 8px; line-height: 1.4;">"${coachingQ}"</div>`;
+          html += `</div>`;
+        }
+        
+        html += `</div>`;
+      });
+      
+      html += `</div>`;
+      html += `<div class="bg-blue-50 px-6 py-4 border-t">`;
+      html += `<div class="text-xs font-semibold text-blue-900 mb-2">📊 Pedagogical Insight</div>`;
+      html += `<div class="text-sm text-blue-800 leading-relaxed">`;
+      html += `Calculated as the most frequent performance level (Mode) across all units. In case of a tie, the higher TP is awarded to recognize and reward peak potential.`;
+      html += `</div>`;
+      html += `</div>`;
+      html += `</div>`;
+    });
+    
+    html += '</div>';
+    document.getElementById('final-report-container').innerHTML = html;
+  }
+
+
+
+  function generatePasteableSpreadsheetData() {
+    try {
+      const activeClassId = reportActiveClass || "Report";
+      const students = getStudentsByClass(activeClassId);
+      
+      if (students.length === 0) {
+        alert("No student data found for " + activeClassId);
+        return;
+      }
+      
+      // Build tab-separated data for Excel paste
+      let tableText = "Number\tStudent's Name\tFinal Listening TP\tFinal Speaking TP\tFinal Reading TP\tFinal Writing TP\n";
+      
+      students.forEach((student, index) => {
+        const l_tp = calculateSkillTP(student.name, "1", allRecords) || "-";
+        const s_tp = calculateSkillTP(student.name, "2", allRecords) || "-";
+        const r_tp = calculateSkillTP(student.name, "3", allRecords) || "-";
+        const w_tp = calculateSkillTP(student.name, "4", allRecords) || "-";
+        
+        tableText += `${index + 1}\t${student.name}\t${l_tp}\t${s_tp}\t${r_tp}\t${w_tp}\n`;
+      });
+      
+      // Create or update the display box
+      let displayBox = document.getElementById("spreadsheet-copy-box");
+      if (!displayBox) {
+        displayBox = document.createElement("div");
+        displayBox.id = "spreadsheet-copy-box";
+        displayBox.style.margin = "20px auto";
+        displayBox.style.padding = "15px";
+        displayBox.style.background = "#fff";
+        displayBox.style.border = "2px dashed #1F4E78";
+        displayBox.style.borderRadius = "8px";
+        displayBox.style.maxWidth = "800px";
+        
+        displayBox.innerHTML = `
+          <h4 style="color:#1F4E78; margin-top:0;">📋 Excel Paste Matrix Ready!</h4>
+          <p style="font-size:12px; color:#555;">Click the button below to copy the data, then open Excel or Google Sheets and paste into cell A1.</p>
+          <textarea id="spreadsheet-text-data" style="width:100%; height:150px; font-family:monospace; font-size:12px; margin-bottom:10px; padding:8px; border:1px solid #ddd; border-radius:4px;"></textarea>
+          <button id="copy-text-btn" style="background:#1F4E78; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Copy to Clipboard</button>
+        `;
+        
+        document.getElementById('final-report-container').parentNode.insertBefore(displayBox, document.getElementById('final-report-container'));
+      }
+      
+      const textarea = document.getElementById("spreadsheet-text-data");
+      textarea.value = tableText;
+      textarea.select();
+      
+      document.getElementById("copy-text-btn").onclick = function() {
+        textarea.select();
+        document.execCommand("copy");
+        alert(`Data for Class ${activeClassId} copied to clipboard! Paste into Excel cell A1.`);
+      };
+      
+      displayBox.scrollIntoView({ behavior: 'smooth' });
+      
+    } catch (err) {
+      alert("Error generating data: " + err.message);
+    }
+  }
+
+  function exportFinalReportToXLS() {
+    generatePasteableSpreadsheetData();
+  }
+
+  // ===== ANALISIS TAB =====
+  let analisisActiveClass = null;
+
+  function initAnalisisTab() {
+    const classes = teachersConfig[currentTeacher];
+    if (!analisisActiveClass || !classes.includes(analisisActiveClass)) {
+      analisisActiveClass = classes[0];
+    }
+    
+    // Populate class dropdown
+    const classSelect = document.getElementById('analisis-class-select');
+    classSelect.innerHTML = classes.map(c => `<option value="${c}" ${c === analisisActiveClass ? 'selected' : ''}>${c}</option>`).join('');
+    classSelect.addEventListener('change', (e) => {
+      analisisActiveClass = e.target.value;
+      updateAnalisisUI();
+    });
+    
+    updateAnalisisUI();
+  }
+
+  function updateAnalisisUI() {
+    const skillSelect = document.getElementById('analisis-skill-select');
+    const lsSelect = document.getElementById('analisis-ls-select');
+    const selectedSkill = skillSelect.value;
+    
+    // Populate LS dropdown based on selected skill
+    lsSelect.innerHTML = '<option value="">Semua SP</option>';
+    if (selectedSkill) {
+      const form = getForm(analisisActiveClass);
+      const lsArray = officialLearningStandards[form] || [];
+      const filteredLS = lsArray.filter(ls => ls.code.charAt(0) === selectedSkill);
+      filteredLS.forEach(ls => {
+        lsSelect.innerHTML += `<option value="${ls.code}">${ls.code}</option>`;
+      });
+    } else {
+      // Show all LS for this form
+      const form = getForm(analisisActiveClass);
+      const lsArray = officialLearningStandards[form] || [];
+      lsArray.forEach(ls => {
+        lsSelect.innerHTML += `<option value="${ls.code}">${ls.code}</option>`;
+      });
+    }
+  }
+
+  function runAnalisis() {
+    const selectedClass = analisisActiveClass;
+    const selectedSkill = document.getElementById('analisis-skill-select').value;
+    const selectedLS = document.getElementById('analisis-ls-select').value;
+    
+    // Filter records
+    let filteredRecords = allRecords.filter(r => r.class_name === selectedClass);
+    
+    if (selectedSkill) {
+      filteredRecords = filteredRecords.filter(r => r.learning_standard.charAt(0) === selectedSkill);
+    }
+    
+    if (selectedLS) {
+      filteredRecords = filteredRecords.filter(r => r.learning_standard === selectedLS);
+    }
+    
+    // Calculate metrics
+    const totalRecords = filteredRecords.length;
+    const uniqueStudents = new Set(filteredRecords.map(r => r.student_name)).size;
+    
+    // Count by TP range
+    let tp1tp2 = 0, tp3tp4 = 0, tp5tp6 = 0;
+    const tpCounts = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, 'TD': 0 };
+    
+    const studentTPMap = {};
+    filteredRecords.forEach(r => {
+      if (r.final_tp) {
+        const tpMatch = r.final_tp.match(/\d/);
+        if (tpMatch) {
+          const tpNum = tpMatch[0];
+          studentTPMap[r.student_name] = tpNum;
+        }
+      }
+    });
+    
+    Object.values(studentTPMap).forEach(tp => {
+      tpCounts[tp]++;
+      if (tp === '1' || tp === '2') tp1tp2++;
+      else if (tp === '3' || tp === '4') tp3tp4++;
+      else if (tp === '5' || tp === '6') tp5tp6++;
+    });
+    
+    // Count students with no TP (Tidak Dinilai)
+    const students = getStudentsByClass(selectedClass);
+    students.forEach(student => {
+      if (!studentTPMap[student.name]) {
+        tpCounts['TD']++;
+      }
+    });
+    
+    // Update metric cards
+    document.getElementById('metric-total-records').textContent = totalRecords;
+    document.getElementById('metric-unique-students').textContent = uniqueStudents;
+    document.getElementById('metric-tp1-tp2').textContent = tp1tp2;
+    document.getElementById('metric-tp3-tp4').textContent = tp3tp4;
+    document.getElementById('metric-tp5-tp6').textContent = tp5tp6;
+    
+    // Build distribution chart
+    const totalTP = Object.values(tpCounts).reduce((a, b) => a + b, 0);
+    const chartHTML = ['1', '2', '3', '4', '5', '6', 'TD'].map(tp => {
+      const count = tpCounts[tp];
+      const percentage = totalTP > 0 ? (count / totalTP * 100) : 0;
+      const label = tp === 'TD' ? 'Tidak Dinilai' : `TP${tp}`;
+      const bgColor = tp === 'TD' ? '#d1d5db' : tp <= '2' ? '#ef4444' : tp <= '4' ? '#eab308' : '#10b981';
+      
+      return `
+        <div class="flex items-center gap-4">
+          <div class="w-20 text-sm font-semibold text-gray-700">${label}</div>
+          <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+            <div class="h-full transition-all" style="width: ${percentage}%; background-color: ${bgColor};"></div>
+          </div>
+          <div class="w-12 text-right text-sm font-bold text-gray-800">${count}</div>
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('distribution-chart').innerHTML = chartHTML;
+  }
+
+  function exportFinalReportToXLS() {
+    generatePasteableSpreadsheetData();
+  }
+  const dataHandler = {
+    onDataChanged(data) {
+      allRecords = data;
+      if (currentTab === 'p2') renderCollection();
+      if (currentTab === 'p3') renderRekod();
+    }
+  };
+
+  (async () => {
+    const result = await window.dataSdk.init(dataHandler);
+    if (!result.isOk) console.error('SDK init failed');
+    buildDirectory();
+    document.getElementById('date-input').valueAsDate = new Date();
+    lucide.createIcons();
+  })();
+  </script>
+  </div>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0f9432bc666a319',t:'MTc4MjExMDQzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body></html>  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TP Tracker System</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
